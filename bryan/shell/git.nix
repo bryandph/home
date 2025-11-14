@@ -39,7 +39,8 @@
         };
         submodule.recurse = "true";
         url = {
-          "git@github.com:".insteadOf = "https://github.com/";
+          "git@github.com:".insteadOf = ["gh:" "https://github.com/"];
+          "git@git.bph:".insteadOf = "bph:";
         };
         status.submoduleSummary = true;
       };

@@ -99,7 +99,7 @@
     
     # Function to create home configurations (for use by importing flakes)
     lib = {
-      mkHomeConfiguration = mkHomeConfiguration;
+      inherit mkHomeConfiguration;
       
       # Helper to create configurations with different globals
       mkHomeConfigurationWithGlobals = globals: {

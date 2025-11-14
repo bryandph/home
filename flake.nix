@@ -23,13 +23,11 @@
     };
   };
 
-  outputs = inputs @ {
-    self,
+  outputs = {
     nixpkgs,
     home-manager,
     sops-nix,
     systems,
-    stylix,
     ...
   }: let
     forAllSystems = nixpkgs.lib.genAttrs (import systems);

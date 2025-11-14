@@ -4,6 +4,13 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+
+    flake-root.url = "github:srid/flake-root";
+
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,17 +28,41 @@
       url = "github:nix-community/stylix/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Development environment dependencies
+    devenv = {
+      url = "github:cachix/devenv";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+      };
+    };
+
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    gitignore = {
+      url = "github:hercules-ci/gitignore.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    pre-commit-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        gitignore.follows = "gitignore";
+      };
+    };
+
+    nix-auto-follow = {
+      url = "github:fzakaria/nix-auto-follow";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {
-    nixpkgs,
-    home-manager,
-    sops-nix,
-    systems,
-    ...
-  }: let
-    forAllSystems = nixpkgs.lib.genAttrs (import systems);
-
+  outputs = inputs @ {flake-parts, ...}: let
     # Global configuration - can be overridden when importing this flake
     defaultGlobals = {
       user = "bryan";
@@ -45,92 +76,112 @@
         }
       );
     };
+  in
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = [
+        "aarch64-darwin"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "x86_64-linux"
+      ];
 
-    # Function to create home configurations with custom globals
-    mkHomeConfiguration = {
-      system,
-      modules,
-      globals ? defaultGlobals,
-      extraSpecialArgs ? {},
-    }:
-      home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.${system};
-        extraSpecialArgs =
-          {
-            inherit globals;
-          }
-          // extraSpecialArgs;
-        modules =
-          modules
-          ++ [
-            sops-nix.homeManagerModules.sops
-          ];
-      };
-  in {
-    # Standalone home configurations
-    homeConfigurations = {
-      # NixOS home configuration
-      "${defaultGlobals.user}" = mkHomeConfiguration {
-        system = "x86_64-linux";
-        modules = [
-          ./bryan
-        ];
+      imports = [
+        inputs.treefmt-nix.flakeModule
+        inputs.flake-root.flakeModule
+        inputs.devenv.flakeModule
+        inputs.home-manager.flakeModules.home-manager
+        ./flake-parts
+      ];
+
+      _module.args = {
+        globals = defaultGlobals;
       };
 
-      # Darwin home configuration
-      "${defaultGlobals.user}-darwin" = mkHomeConfiguration {
-        system = "aarch64-darwin";
-        modules = [
-          ./bryan/darwin.nix
-        ];
-      };
-    };
+      flake = {
+        # Home modules that can be imported by other flakes
+        homeModules = {
+          bryan = ./bryan;
+          bryan-with-de = ./bryan/with-de.nix;
+          bryan-darwin = ./bryan/darwin.nix;
 
-    # Home modules that can be imported by other flakes
-    homeModules = {
-      bryan = ./bryan;
-      bryan-with-de = ./bryan/with-de.nix;
-      bryan-darwin = ./bryan/darwin.nix;
-
-      # Individual component modules
-      bryan-shell = ./bryan/shell;
-      bryan-de = ./bryan/de;
-    };
-
-    # Function to create home configurations (for use by importing flakes)
-    lib = {
-      inherit mkHomeConfiguration;
-
-      # Helper to create configurations with different globals
-      mkHomeConfigurationWithGlobals = globals: {
-        system,
-        modules,
-        extraSpecialArgs ? {},
-      }:
-        mkHomeConfiguration {
-          inherit system modules extraSpecialArgs;
-          globals = defaultGlobals // globals;
+          # Individual component modules
+          bryan-shell = ./bryan/shell;
+          bryan-de = ./bryan/de;
         };
-    };
 
-    # Development shell for working on home configurations
-    devShells = forAllSystems (system: let
-      pkgs = nixpkgs.legacyPackages.${system};
-    in {
-      default = pkgs.mkShell {
-        buildInputs = [
-          pkgs.home-manager
-        ];
-        shellHook = ''
-          echo "Home Manager development shell"
-          echo "Available commands:"
-          echo "  home-manager switch --flake .#${defaultGlobals.user}"
-          echo "  home-manager switch --flake .#${defaultGlobals.user}-darwin"
-        '';
+        # Function to create home configurations (for use by importing flakes)
+        lib = {
+          # Function to create home configurations with custom globals
+          mkHomeConfiguration = {
+            system,
+            modules,
+            globals ? defaultGlobals,
+            extraSpecialArgs ? {},
+          }:
+            inputs.home-manager.lib.homeManagerConfiguration {
+              pkgs = inputs.nixpkgs.legacyPackages.${system};
+              extraSpecialArgs =
+                {
+                  inherit globals;
+                }
+                // extraSpecialArgs;
+              modules =
+                modules
+                ++ [
+                  inputs.sops-nix.homeManagerModules.sops
+                ];
+            };
+
+          # Helper to create configurations with different globals
+          mkHomeConfigurationWithGlobals = globals: {
+            system,
+            modules,
+            extraSpecialArgs ? {},
+          }:
+            inputs.home-manager.lib.homeManagerConfiguration {
+              pkgs = inputs.nixpkgs.legacyPackages.${system};
+              extraSpecialArgs =
+                {
+                  inherit globals;
+                }
+                // extraSpecialArgs
+                // {globals = defaultGlobals // globals;};
+              modules =
+                modules
+                ++ [
+                  inputs.sops-nix.homeManagerModules.sops
+                ];
+            };
+        };
+
+        # Standalone home configurations
+        homeConfigurations = {
+          # NixOS home configuration
+          "${defaultGlobals.user}" = inputs.home-manager.lib.homeManagerConfiguration {
+            pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+            extraSpecialArgs = {
+              inherit (defaultGlobals) user;
+              globals = defaultGlobals;
+            };
+            modules = [
+              ./bryan
+              inputs.sops-nix.homeManagerModules.sops
+            ];
+          };
+
+          # Darwin home configuration
+          "${defaultGlobals.user}-darwin" = inputs.home-manager.lib.homeManagerConfiguration {
+            pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
+            extraSpecialArgs = {
+              inherit (defaultGlobals) user;
+              globals = defaultGlobals;
+            };
+            modules = [
+              ./bryan/darwin.nix
+              inputs.sops-nix.homeManagerModules.sops
+            ];
+          };
+        };
       };
-    });
-
-    # Formatter for the home configurations
-    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
-  };
+    };
 }

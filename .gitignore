@@ -1,0 +1,15 @@
+# Nix 
+build
+results
+result
+result-*
+
+# Home Manager
+backups
+*.backup
+
+# Direnv
+.direnv/
+
+# Development environment
+.devenv/

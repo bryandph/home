@@ -46,8 +46,6 @@
           sha256 = "198i0v7zwk8ziqlyx001rrw2rpfnsna3v4n7gz3scf2s28d0zana";
         }
       );
-      hashedPassword = "$6$Wj94imiW4A7WusuF$gfdED9RXUbodgwJvNiTC5gWH6l4jKk1sIiNxFN72jY/KA/5fncMdkFcGowCbWaqs9l4Wtup/4ppRDpR7tQxr/1";
-      walletAddress = "4AGMcHcEQov124yn5wTTgXDxDwqjyyLEzaMjYJLbH4Ms7DiWirinYj4QhV3YiEXVr88VAnPNropphanP3ffGrTVZBpsKYHZ";
     };
 
     # Function to create home configurations with custom globals
@@ -122,8 +120,8 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in {
       default = pkgs.mkShell {
-        buildInputs = with pkgs; [
-          home-manager
+        buildInputs = [
+          pkgs.home-manager
         ];
         shellHook = ''
           echo "Home Manager development shell"

@@ -1,6 +1,5 @@
 {pkgs, ...}: {
   home.packages = with pkgs; [
-    cachix
     nixos-anywhere
     nix-output-monitor
     nix-tree

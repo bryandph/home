@@ -54,9 +54,7 @@
       ];
 
       imports = [
-        inputs.treefmt-nix.flakeModule
         inputs.flake-root.flakeModule
-        inputs.devenv.flakeModule
         inputs.home-manager.flakeModules.home-manager
         ./flake-parts
       ];

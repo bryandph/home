@@ -25,6 +25,13 @@
       url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-auto-follow = {
+      url = "github:fzakaria/nix-auto-follow";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.inputs.systems.follows = "systems";
+      };
+    };
   };
 
   outputs = inputs @ {flake-parts, ...}: let

@@ -236,7 +236,7 @@
       # Infrastructure development profile (combines terraform with other tools)
       infra = lib.recursiveUpdate terraformConfig {
         packages = terraformConfig.packages ++ commonPackages;
-        
+
         enterShell = ''
           echo "🏗️ Infrastructure development environment ready!"
           echo "🌍 Terraform tools available: terraform, terranix, tflint"

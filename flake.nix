@@ -3,29 +3,26 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
-
     flake-root.url = "github:srid/flake-root";
-
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     systems.url = "github:nix-systems/default";
-
-    # Optional: Keep stylix for consistent theming
     stylix = {
       url = "github:nix-community/stylix/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -137,7 +134,7 @@
 
           # Darwin home configuration
           "${defaultGlobals.user}-darwin" = inputs.home-manager.lib.homeManagerConfiguration {
-            pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
+            pkgs = inputs.nix-darwin.legacyPackages.aarch64-darwin;
             extraSpecialArgs = {
               inherit (defaultGlobals) user;
               globals = defaultGlobals;

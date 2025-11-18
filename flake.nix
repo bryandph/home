@@ -136,6 +136,7 @@
             modules = [
               ./bryan
               inputs.sops-nix.homeManagerModules.sops
+              inputs.stylix.homeModules.stylix
             ];
           };
 
@@ -149,6 +150,7 @@
             modules = [
               ./bryan/darwin.nix
               inputs.sops-nix.homeManagerModules.sops
+              inputs.stylix.homeModules.stylix
             ];
           };
         };

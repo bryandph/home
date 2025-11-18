@@ -23,10 +23,6 @@
         enable = true;
         enableNushellIntegration = true;
       };
-      mise = {
-        enable = true;
-        enableNushellIntegration = true;
-      };
       gpg.enable = true;
       zellij.enable = true;
       jq.enable = true;

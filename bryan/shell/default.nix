@@ -31,6 +31,7 @@
       zed-editor = {
         enable = true;
         installRemoteServer = true;
+        package = pkgs.zed-latest;
       };
       zoxide = {
         enable = true;

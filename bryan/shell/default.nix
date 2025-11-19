@@ -11,7 +11,6 @@
     programs = {
       helix.enable = true;
       uv.enable = true;
-      earthly.enable = true;
       btop.enable = true;
       direnv = {
         enable = true;
@@ -31,7 +30,6 @@
       zed-editor = {
         enable = true;
         installRemoteServer = true;
-        package = pkgs.zed-latest;
       };
       zoxide = {
         enable = true;

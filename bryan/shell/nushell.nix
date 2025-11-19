@@ -157,7 +157,7 @@ in {
       htop = "btop";
       neofetch = "fastfetch";
       # override uname for zed
-      # uname = "^uname";
+      uname = "^uname";
     };
   };
 }

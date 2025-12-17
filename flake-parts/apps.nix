@@ -1,6 +1,5 @@
 {globals, ...}: {
   perSystem = {
-    system,
     pkgs,
     ...
   }: let

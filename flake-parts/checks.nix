@@ -1,7 +1,6 @@
 {
   perSystem = {
     pkgs,
-    system,
     ...
   }: {
     checks = {

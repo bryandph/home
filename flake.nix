@@ -73,8 +73,9 @@
           bryan = ./bryan;
           bryan-with-de = ./bryan/with-de.nix;
           bryan-darwin = ./bryan/darwin.nix;
+        };
 
-          # Individual component modules
+        nixos-modules = {
           bryan-shell = ./bryan/shell;
           bryan-de = ./bryan/de;
         };

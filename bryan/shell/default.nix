@@ -109,7 +109,6 @@
         fzf # Fuzzy finder
         libfido2 # FIDO2 library
         fastfetch # neofetch replacement
-        xmr-monitor
         hexyl
       ];
     };

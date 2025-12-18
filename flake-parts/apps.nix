@@ -1,8 +1,5 @@
 {globals, ...}: {
-  perSystem = {
-    pkgs,
-    ...
-  }: let
+  perSystem = {pkgs, ...}: let
     # Reusable script components
     scripts = {
       fmt = ''

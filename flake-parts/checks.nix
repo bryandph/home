@@ -1,8 +1,5 @@
 {
-  perSystem = {
-    pkgs,
-    ...
-  }: {
+  perSystem = {pkgs, ...}: {
     checks = {
       # Basic home configurations build check
       home-bryan = pkgs.runCommand "check-home-bryan" {} ''

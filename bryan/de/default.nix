@@ -1,3 +1,8 @@
 {
-  imports = [./hyprland.nix];
+  imports = [
+    ./hyprland.nix
+    ./kitty.nix
+    ./chromium.nix
+    ./wofi.nix
+  ];
 }

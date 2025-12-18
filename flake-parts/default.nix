@@ -5,6 +5,5 @@
     ./apps.nix
     ./checks.nix
     ./formatter.nix
-    ./terraform-module.nix
   ];
 }

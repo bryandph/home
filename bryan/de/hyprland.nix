@@ -1,10 +1,4 @@
 {pkgs, ...}: {
-  imports = [
-    ./kitty.nix
-    ./chromium.nix
-    ./wofi.nix
-  ];
-
   services.hyprpaper.enable = true;
   programs.hyprshell = {
     enable = true;

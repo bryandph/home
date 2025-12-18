@@ -46,8 +46,6 @@
         evcxr
         nix
         nodejs
-        claude-code
-        gemini-cli
 
         # Kubernetes Tools
         kubectl

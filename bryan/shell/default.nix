@@ -108,6 +108,7 @@
         libfido2 # FIDO2 library
         fastfetch # neofetch replacement
         hexyl
+        nix-search-cli
       ];
     };
   };

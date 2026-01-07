@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   services.hyprpaper.enable = true;
   programs.hyprshell = {
     enable = true;

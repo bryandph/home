@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   services.hyprpaper.enable = true;
   programs.hyprshell = {
     enable = true;
@@ -30,11 +31,11 @@
     waypipe
   ];
   wayland.windowManager.hyprland = {
-    xwayland = {
-      enable = true;
-    };
     enable = true;
     settings = {
+      xwayland = {
+        enable = true;
+      };
       "$mod" = "ALT";
       bind = [
         "$mod, Return, exec, kitty"

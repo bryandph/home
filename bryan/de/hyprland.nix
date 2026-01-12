@@ -1,8 +1,7 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   services.hyprpaper.enable = true;
-  programs.hyprshell = {
-    enable = true;
-  };
+
   services.hypridle = {
     enable = true;
     settings = {
@@ -24,7 +23,16 @@
       ];
     };
   };
-  programs.hyprlock.enable = true;
+  programs = {
+    hyprshell = {
+      enable = true;
+    };
+    hyprlock.enable = true;
+    hyprland = {
+      enable = true;
+      xwayland.enable = true;
+    };
+  };
   home.packages = with pkgs; [
     waybar
     waypipe
@@ -32,9 +40,6 @@
   wayland.windowManager.hyprland = {
     enable = true;
     settings = {
-      xwayland = {
-        enable = true;
-      };
       "$mod" = "ALT";
       bind = [
         "$mod, Return, exec, kitty"

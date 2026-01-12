@@ -113,6 +113,7 @@
 
         # Security Tools
         nmap
+        rustscan
       ];
     };
   };

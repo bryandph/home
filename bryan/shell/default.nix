@@ -80,6 +80,7 @@
         nix-direnv
         rustscan
         lazygit
+        unixtools.arp
 
         # Container Tools
         dive
@@ -109,6 +110,9 @@
         fastfetch # neofetch replacement
         hexyl
         nix-search-cli
+
+        # Security Tools
+        nmap
       ];
     };
   };

@@ -28,10 +28,6 @@
       enable = true;
     };
     hyprlock.enable = true;
-    hyprland = {
-      enable = true;
-      xwayland.enable = true;
-    };
   };
   home.packages = with pkgs; [
     waybar
@@ -39,6 +35,7 @@
   ];
   wayland.windowManager.hyprland = {
     enable = true;
+    xwayland.enable = true;
     settings = {
       "$mod" = "ALT";
       bind = [

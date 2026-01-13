@@ -3,7 +3,7 @@
     nixos-anywhere
     nix-output-monitor
     nix-tree
-    nixfmt-rfc-style
+    nixfmt
     nix-prefetch-github
     nil
     treefmt

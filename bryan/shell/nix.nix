@@ -5,7 +5,7 @@
     nix-tree
     nixfmt
     nix-prefetch-github
-    nil
+    nixd
     treefmt
     nh
   ];

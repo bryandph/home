@@ -8,7 +8,6 @@
     # Common packages and hooks for all development environments
     commonPackages = with pkgs; [
       statix
-      nil
       nixd
       alejandra
       deadnix
@@ -82,7 +81,6 @@
           terranix
           tflint
           statix
-          nil
           nixd
           alejandra
           deadnix
@@ -226,7 +224,7 @@
           echo "🚀 Polyglot development environment ready!"
           echo "🦀 Rust tools available: cargo, clippy, rustfmt"
           echo "🐍 Python tools available: uv, python"
-          echo "📦 Nix tools available: statix, nil, nixd, alejandra"
+          echo "📦 Nix tools available: statix, nixd, alejandra"
           echo "🏠 Home Manager tools available"
         '';
 
@@ -242,7 +240,7 @@
           echo "🌍 Terraform tools available: terraform, terranix, tflint"
           echo "☁️ Cloud CLIs available: aws, gcloud, az"
           echo "🔐 Security tools available: vault"
-          echo "📦 Nix tools available: statix, nil, nixd, alejandra"
+          echo "📦 Nix tools available: statix, nixd, alejandra"
           echo "🏠 Home Manager tools available"
         '';
       };

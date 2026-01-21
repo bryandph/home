@@ -81,6 +81,7 @@
         rustscan
         lazygit
         unixtools.arp
+        tree
 
         # Container Tools
         dive

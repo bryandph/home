@@ -2,6 +2,7 @@
   programs = {
     git = {
       enable = true;
+      lfs = true;
       signing = {
         key = globals.gpg_thumbprint;
         signByDefault = true;

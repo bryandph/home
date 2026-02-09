@@ -115,6 +115,7 @@
         # Security Tools
         nmap
         rustscan
+        git-filter-repo
       ];
     };
   };

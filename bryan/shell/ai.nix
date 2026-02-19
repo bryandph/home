@@ -55,6 +55,11 @@ _: {
       };
     };
 
+    # Gemini CLI
+    gemini-cli = {
+      enable = true;
+    };
+
     # OpenCode
     opencode = {
       enable = true;

@@ -52,6 +52,7 @@ _: {
           "explanatory-output-style@claude-plugins-official" = true;
           "feature-dev@claude-plugins-official" = true;
         };
+        attribution = {};
       };
     };
 

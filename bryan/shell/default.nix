@@ -6,6 +6,7 @@
     ./nushell.nix
     ./starship.nix
     ./gptcommit.nix
+    ./ai.nix
   ];
   config = {
     programs = {

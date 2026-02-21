@@ -2,7 +2,7 @@ _: {
   programs = {
     # Global MCP servers — shared across MCP-aware tools (claude-code, opencode, etc.)
     mcp = {
-      enable = true;
+      enable = false;
       servers = {
         context7 = {
           type = "http";
@@ -39,7 +39,7 @@ _: {
     # Claude Code
     claude-code = {
       enable = true;
-      enableMcpIntegration = true;
+      enableMcpIntegration = false;
       settings = {
         enabledPlugins = {
           "rust-analyzer-lsp@claude-plugins-official" = true;

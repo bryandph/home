@@ -4,9 +4,9 @@
   globals,
   ...
 }: let
+  inherit (globals) user;
   isMac = pkgs.stdenv.isDarwin;
   homeDir = "/Users/${globals.user}";
-  user = globals.user;
 
   # nix-darwin sets up the environment via POSIX shell scripts (/etc/static/bashrc, /etc/zshenv)
   # which nushell can't source. We reconstruct the nix-darwin environment here using

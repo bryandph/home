@@ -1,16 +1,18 @@
-_: {
+{pkgs, ...}: {
   programs = {
-    # Global MCP servers — shared across MCP-aware tools (claude-code, opencode, etc.)
+    # Shared MCP servers — used by OpenCode via enableMcpIntegration.
+    # Only non-secret servers here (no API tokens).
+    # Secret-requiring servers (github, gitea) go in host-level managed configs.
     mcp = {
-      enable = false;
+      enable = true;
       servers = {
         context7 = {
-          type = "http";
           url = "https://mcp.context7.com/mcp";
-          headers.CONTEXT7_API_KEY = "{env:CONTEXT7_API_KEY}";
+        };
+        nixos = {
+          command = "${pkgs.mcp-nixos}/bin/mcp-nixos";
         };
         serena = {
-          type = "stdio";
           command = "nix";
           args = [
             "run"
@@ -23,23 +25,13 @@ _: {
             "$(pwd)"
           ];
         };
-        github = {
-          type = "http";
-          url = "https://api.githubcopilot.com/mcp";
-          headers.Authorization = "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}";
-        };
-        nixos = {
-          type = "stdio";
-          command = "nix";
-          args = ["run" "github:utensils/mcp-nixos" "--"];
-        };
       };
     };
 
-    # Claude Code
+    # Claude Code — no wrapper, no mcpServers, no enableMcpIntegration.
+    # MCP servers come from /etc/claude-code/managed-mcp.json (NixOS level).
     claude-code = {
       enable = true;
-      enableMcpIntegration = false;
       settings = {
         enabledPlugins = {
           "rust-analyzer-lsp@claude-plugins-official" = true;
@@ -61,7 +53,7 @@ _: {
       enable = true;
     };
 
-    # OpenCode
+    # OpenCode — pulls MCP servers from programs.mcp.servers via config file (no wrapper)
     opencode = {
       enable = true;
       enableMcpIntegration = true;

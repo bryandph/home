@@ -24,7 +24,10 @@
         enableNushellIntegration = true;
       };
       gpg.enable = true;
-      zellij.enable = true;
+      zellij = {
+        enable = true;
+        settings.default_mode = "tmux";
+      };
       jq.enable = true;
       k9s.enable = true;
       kubecolor.enable = true;

@@ -127,6 +127,7 @@ in {
       k = "kubecolor";
       ktx = "kubectx";
       htop = "btop";
+      tmux = "zellij";
       neofetch = "fastfetch";
       # override uname for zed
       uname = "^uname";

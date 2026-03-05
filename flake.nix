@@ -32,6 +32,9 @@
         flake-utils.inputs.systems.follows = "systems";
       };
     };
+    workmux = {
+      url = "github:raine/workmux";
+    };
   };
 
   outputs = inputs @ {flake-parts, ...}: let
@@ -94,6 +97,7 @@
               extraSpecialArgs =
                 {
                   inherit globals;
+                  workmux = inputs.workmux.packages.${system}.default;
                 }
                 // extraSpecialArgs;
               modules =
@@ -114,6 +118,7 @@
               extraSpecialArgs =
                 {
                   inherit globals;
+                  workmux = inputs.workmux.packages.${system}.default;
                 }
                 // extraSpecialArgs
                 // {globals = defaultGlobals // globals;};
@@ -133,6 +138,7 @@
             extraSpecialArgs = {
               inherit (defaultGlobals) user;
               globals = defaultGlobals;
+              workmux = inputs.workmux.packages.x86_64-linux.default;
             };
             modules = [
               ./bryan
@@ -147,6 +153,7 @@
             extraSpecialArgs = {
               inherit (defaultGlobals) user;
               globals = defaultGlobals;
+              workmux = inputs.workmux.packages.aarch64-darwin.default;
             };
             modules = [
               ./bryan/darwin.nix

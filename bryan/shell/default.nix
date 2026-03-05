@@ -7,6 +7,7 @@
     ./starship.nix
     ./gptcommit.nix
     ./ai.nix
+    ./workmux.nix
   ];
   config = {
     programs = {
@@ -101,6 +102,7 @@
         minio-client
         gptcommit
         yamlfmt
+        tmux
         mprocs
         wiki-tui
         speedtest-rs

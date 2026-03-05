@@ -97,13 +97,18 @@
               extraSpecialArgs =
                 {
                   inherit globals;
-                  workmux = inputs.workmux.packages.${system}.default;
                 }
                 // extraSpecialArgs;
               modules =
                 modules
                 ++ [
                   inputs.sops-nix.homeManagerModules.sops
+                  {
+                    programs.workmux = {
+                      enable = true;
+                      package = inputs.workmux.packages.${system}.default;
+                    };
+                  }
                 ];
             };
 
@@ -118,7 +123,6 @@
               extraSpecialArgs =
                 {
                   inherit globals;
-                  workmux = inputs.workmux.packages.${system}.default;
                 }
                 // extraSpecialArgs
                 // {globals = defaultGlobals // globals;};
@@ -126,6 +130,12 @@
                 modules
                 ++ [
                   inputs.sops-nix.homeManagerModules.sops
+                  {
+                    programs.workmux = {
+                      enable = true;
+                      package = inputs.workmux.packages.${system}.default;
+                    };
+                  }
                 ];
             };
         };
@@ -138,12 +148,17 @@
             extraSpecialArgs = {
               inherit (defaultGlobals) user;
               globals = defaultGlobals;
-              workmux = inputs.workmux.packages.x86_64-linux.default;
             };
             modules = [
               ./bryan
               inputs.sops-nix.homeManagerModules.sops
               inputs.stylix.homeModules.stylix
+              {
+                programs.workmux = {
+                  enable = true;
+                  package = inputs.workmux.packages.x86_64-linux.default;
+                };
+              }
             ];
           };
 
@@ -153,12 +168,17 @@
             extraSpecialArgs = {
               inherit (defaultGlobals) user;
               globals = defaultGlobals;
-              workmux = inputs.workmux.packages.aarch64-darwin.default;
             };
             modules = [
               ./bryan/darwin.nix
               inputs.sops-nix.homeManagerModules.sops
               inputs.stylix.homeModules.stylix
+              {
+                programs.workmux = {
+                  enable = true;
+                  package = inputs.workmux.packages.aarch64-darwin.default;
+                };
+              }
             ];
           };
         };

@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   imports = [
     ./git.nix
     ./gpg.nix
@@ -6,7 +7,6 @@
     ./nushell.nix
     ./starship.nix
     ./gptcommit.nix
-    ./ai.nix
     ./workmux.nix
   ];
   config = {

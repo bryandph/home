@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   programs = {
     # Shared MCP servers — used by OpenCode via enableMcpIntegration.
     # Only non-secret servers here (no API tokens).
@@ -44,7 +45,7 @@
           "explanatory-output-style@claude-plugins-official" = true;
           "feature-dev@claude-plugins-official" = true;
         };
-        attribution = {};
+        attribution = { };
       };
     };
 
@@ -61,15 +62,15 @@
         model = "anthropic/claude-opus-4-6";
         small_model = "anthropic/claude-sonnet-4-6";
         provider = {
-          ollama = {
+          ollama-blackwin = {
             npm = "@ai-sdk/openai-compatible";
             name = "Ollama-Blackwin";
             options = {
               baseURL = "http://blackwin:11434/v1";
             };
             models = {
-              gemma3-12b-heretic = {
-                name = "hf.co/DreamFast/gemma-3-12b-it-heretic-v2";
+              "hf.co/DreamFast/gemma-3-12b-it-heretic-v2" = {
+                name = "Gemma 3 12B Heretic v2";
               };
             };
           };

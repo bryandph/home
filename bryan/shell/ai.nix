@@ -60,6 +60,20 @@
       settings = {
         model = "anthropic/claude-opus-4-6";
         small_model = "anthropic/claude-sonnet-4-6";
+        provider = {
+          ollama = {
+            npm = "@ai-sdk/openai-compatible";
+            name = "Ollama-Blackwin";
+            options = {
+              baseURL = "http://blackwin:11434/v1";
+            };
+            models = {
+              gemma3-12b-heretic = {
+                name = "hf.co/DreamFast/gemma-3-12b-it-heretic-v2";
+              };
+            };
+          };
+        };
       };
     };
   };

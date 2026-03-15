@@ -1,6 +1,7 @@
 {globals, ...}: {
   imports = [
     ./shell
+    ./shell/ghostty.nix
   ];
 
   home = {

@@ -73,7 +73,7 @@ in {
 
     environmentVariables = {
       EDITOR = "hx";
-      VAULT_ADDR = "https://mitra.servers.bph:8200";
+      VAULT_ADDR = "https://vault.bph:8200";
       OPENAI_API_KEY = "ollama";
       OPENAI_API_BASE = "https://ollama.k8s.bph/v1";
       XMR_URL = "http://xmr.crypto.bph";

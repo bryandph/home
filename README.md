@@ -4,19 +4,49 @@ This directory contains a separate flake for Home Manager configurations that ca
 
 ## Structure
 
-- `flake.nix` - Main flake definition
-- `bryan/` - User-specific configurations
-  - `default.nix` - Base configuration
-  - `darwin.nix` - macOS-specific configuration
-  - `with-de.nix` - Desktop environment configuration
-  - `shell/` - Shell configurations
-  - `de/` - Desktop environment configurations
+```
+home/
+├── flake.nix              # Main flake definition
+├── flake-parts/           # Flake-parts modules for home outputs
+└── bryan/
+    ├── default.nix        # Base home configuration (shell only)
+    ├── darwin.nix         # macOS-specific home configuration
+    ├── with-de.nix        # Home configuration with desktop environment
+    ├── shell/             # Shell configurations
+    │   ├── default.nix    # Shell module entry point
+    │   ├── ghostty.nix    # Ghostty terminal
+    │   ├── git.nix        # Git configuration
+    │   ├── gpg.nix        # GPG agent and keys
+    │   ├── gptcommit.nix  # AI commit message generation
+    │   ├── nix.nix        # Nix-related shell tools
+    │   ├── nushell.nix    # Nushell configuration
+    │   ├── starship.nix   # Starship prompt
+    │   └── workmux.nix    # Workmux terminal multiplexer
+    └── de/                # Desktop environment configurations
+```
 
-## Usage
+## Available Modules
 
-### Standalone Usage
+The following home modules are exported:
 
-You can use these configurations directly:
+- **`bryan`**: Base home configuration for Linux (shell tools only)
+- **`bryan-with-de`**: Extended home configuration with desktop environment
+- **`bryan-darwin`**: macOS-specific home configuration
+- **`bryan-shell`**: Just shell configurations
+- **`bryan-de`**: Just desktop environment configurations
+
+## Usage in NixOS
+
+The home modules are automatically included via `home-manager.sharedModules` in NixOS configurations:
+
+- Systems with `withDE = false` (wsl, servers, most SBCs) use the `bryan` module
+- Systems with `withDE = true` (panda, dell, uconsole) use the `bryan-with-de` module
+
+## Usage in Darwin
+
+Darwin systems use the `bryan-darwin` module which is optimized for macOS.
+
+## Standalone Usage
 
 ```bash
 # For NixOS/Linux
@@ -36,7 +66,7 @@ home-manager switch --flake ./home#bryan-darwin
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  
+
   outputs = {home-configs, ...}: {
     # Use the modules
     homeConfigurations.myuser = home-configs.lib.mkHomeConfiguration {
@@ -54,14 +84,6 @@ home-manager switch --flake ./home#bryan-darwin
 }
 ```
 
-## Available Modules
-
-- `bryan` - Base configuration
-- `bryan-with-de` - Configuration with desktop environment
-- `bryan-darwin` - macOS-specific configuration
-- `bryan-shell` - Just shell configurations
-- `bryan-de` - Just desktop environment configurations
-
 ## Development
 
 Use the development shell to work on configurations:
@@ -71,49 +93,4 @@ cd home
 nix develop
 ```
 
-This provides access to `home-manager` and shows available commands.# Home Manager Configurations
-
-This directory contains all Home Manager configurations, separated from NixOS/Darwin system configurations.
-
-## Structure
-
-```
-home/
-└── bryan/
-    ├── default.nix        # Base home configuration (shell only)
-    ├── darwin.nix         # macOS-specific home configuration
-    ├── with-de.nix        # Home configuration with desktop environment
-    ├── shell/             # Shell configurations (nushell, git, gpg, etc.)
-    └── de/                # Desktop environment configurations (hyprland, kitty, etc.)
-```
-
-## Modules
-
-The following home modules are exported in `flake-parts/home.nix`:
-
-- **`bryan`**: Base home configuration for Linux (shell tools only)
-- **`bryan-with-de`**: Extended home configuration with desktop environment
-- **`bryan-darwin`**: macOS-specific home configuration
-
-## Usage in NixOS
-
-The home modules are automatically included via `home-manager.sharedModules` in NixOS configurations:
-
-- Systems with `de = false` (wsl, orangepi5pro) use the `bryan` module
-- Systems with `de = true` (panda) use the `bryan-with-de` module
-
-## Usage in Darwin
-
-Darwin systems use the `bryan-darwin` module which is optimized for macOS.
-
-## Standalone Usage
-
-You can also build home configurations standalone:
-
-```bash
-# Linux home configuration
-nix build .#homeConfigurations.bryan.activationPackage
-
-# macOS home configuration
-nix build .#homeConfigurations.bryan-darwin.activationPackage
-```
+This provides access to `home-manager` and shows available commands.

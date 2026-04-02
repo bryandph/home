@@ -82,39 +82,219 @@ in {
 
     extraEnv = lib.optionalString isMac darwinEnv;
     extraConfig = ''
+      let carapace_completer = {|spans|
+        carapace $spans.0 nushell ...$spans | from json
+      }
+
       $env.config = {
+        show_banner: false
+        highlight_resolved_externals: true
+
         hooks: {
           pre_prompt: [{ ||
-            if (which direnv | is-empty) {
-              return
-            }
-
+            if (which direnv | is-empty) { return }
             direnv export json | from json | default {} | load-env
             if 'ENV_CONVERSIONS' in $env and 'PATH' in $env.ENV_CONVERSIONS {
               $env.PATH = do $env.ENV_CONVERSIONS.PATH.from_string $env.PATH
             }
           }]
         }
-      }
-      # Conditional inclusion based on platform
-      let carapace_completer = {|spans|
-      carapace $spans.0 nushell ...$spans | from json
-      }
-      $env.config = {
-        show_banner: false,
+
         completions: {
-        case_sensitive: false # case-sensitive completions
-        quick: true    # set to false to prevent auto-selecting completions
-        partial: true    # set to false to prevent partial filling of the prompt
-        algorithm: "fuzzy"    # prefix or fuzzy
-        external: {
-        # set to false to prevent nushell looking into $env.PATH to find more suggestions
+          case_sensitive: false
+          quick: true
+          partial: true
+          algorithm: "fuzzy"
+          external: {
             enable: true
-        # set to lower can improve completion performance at the cost of omitting some options
             max_results: 100
-            completer: $carapace_completer # check 'carapace_completer'
+            completer: $carapace_completer
           }
         }
+
+        cursor_shape: {
+          emacs: line
+          vi_insert: line
+          vi_normal: block
+        }
+
+        table: {
+          mode: rounded
+          index_mode: auto
+          show_empty: true
+          padding: { left: 1, right: 1 }
+          trim: {
+            methodology: wrapping
+            wrapping_try_keep_words: true
+          }
+        }
+
+        explore: {
+          status_bar_background: { fg: white, bg: dark_gray }
+          command_bar_text: { fg: white }
+          highlight: { fg: black, bg: yellow }
+          selected_cell: { bg: blue, fg: white }
+        }
+
+        color_config: {
+          separator: dark_gray
+          leading_trailing_space_bg: { attr: n }
+          header: { fg: green, attr: b }
+          empty: blue
+          bool: { fg: purple, attr: i }
+          int: yellow
+          float: yellow
+          filesize: cyan
+          duration: yellow
+          date: { fg: purple, attr: i }
+          range: yellow
+          string: green
+          nothing: dark_gray
+          binary: purple
+          cell-path: cyan
+          row_index: { fg: dark_gray, attr: i }
+          record: blue
+          list: cyan
+          block: blue
+          hints: dark_gray
+          search_result: { fg: black, bg: yellow }
+
+          shape_binary: purple
+          shape_block: blue
+          shape_bool: { fg: purple, attr: i }
+          shape_closure: { fg: cyan, attr: i }
+          shape_custom: green
+          shape_datetime: { fg: purple, attr: i }
+          shape_directory: { fg: blue, attr: i }
+          shape_external: cyan
+          shape_externalarg: { fg: green, attr: i }
+          shape_filepath: { fg: blue, attr: i }
+          shape_flag: { fg: yellow, attr: i }
+          shape_float: yellow
+          shape_garbage: { fg: red, attr: biu }
+          shape_glob_interpolation: { fg: cyan, attr: i }
+          shape_globpattern: { fg: cyan, attr: i }
+          shape_int: yellow
+          shape_internalcall: { fg: blue, attr: b }
+          shape_keyword: { fg: purple, attr: i }
+          shape_list: cyan
+          shape_literal: green
+          shape_match_pattern: green
+          shape_nothing: dark_gray
+          shape_operator: { fg: yellow, attr: b }
+          shape_or: { fg: purple, attr: b }
+          shape_pipe: { fg: purple, attr: b }
+          shape_range: yellow
+          shape_raw_string: green
+          shape_record: blue
+          shape_redirection: { fg: purple, attr: i }
+          shape_signature: { fg: green, attr: b }
+          shape_string: green
+          shape_string_interpolation: { fg: green, attr: i }
+          shape_table: blue
+          shape_variable: { fg: yellow, attr: i }
+          shape_vardecl: { fg: yellow, attr: b }
+        }
+
+        menus: [
+          {
+            name: completion_menu
+            only_buffer_difference: false
+            marker: "◈ "
+            type: {
+              layout: columnar
+              columns: 4
+              col_padding: 2
+            }
+            style: {
+              text: green
+              selected_text: { fg: black, bg: green, attr: b }
+              description_text: { fg: dark_gray, attr: i }
+              match_text: { fg: yellow, attr: b }
+              selected_match_text: { fg: black, bg: yellow, attr: b }
+            }
+          }
+          {
+            name: history_menu
+            only_buffer_difference: true
+            marker: "△ "
+            type: {
+              layout: list
+              page_size: 10
+            }
+            style: {
+              text: cyan
+              selected_text: { fg: black, bg: cyan, attr: b }
+              description_text: { fg: dark_gray, attr: i }
+            }
+          }
+          {
+            name: help_menu
+            only_buffer_difference: true
+            marker: "□ "
+            type: {
+              layout: description
+              columns: 4
+              col_padding: 2
+              selection_rows: 4
+              description_rows: 10
+            }
+            style: {
+              text: blue
+              selected_text: { fg: black, bg: blue, attr: b }
+              description_text: { fg: dark_gray, attr: i }
+            }
+          }
+        ]
+
+        keybindings: [
+          {
+            name: completion_menu
+            modifier: none
+            keycode: tab
+            mode: [emacs vi_normal vi_insert]
+            event: {
+              until: [
+                { send: menu, name: completion_menu }
+                { send: menunext }
+                { edit: complete }
+              ]
+            }
+          }
+          {
+            name: history_menu
+            modifier: control
+            keycode: char_r
+            mode: [emacs vi_normal vi_insert]
+            event: { send: menu, name: history_menu }
+          }
+          {
+            name: help_menu
+            modifier: control
+            keycode: char_q
+            mode: [emacs vi_normal vi_insert]
+            event: { send: menu, name: help_menu }
+          }
+          {
+            name: next_page
+            modifier: control
+            keycode: char_x
+            mode: emacs
+            event: { send: menupagenext }
+          }
+          {
+            name: undo_or_previous_page
+            modifier: control
+            keycode: char_z
+            mode: emacs
+            event: {
+              until: [
+                { send: menupageprevious }
+                { edit: undo }
+              ]
+            }
+          }
+        ]
       }
     '';
     shellAliases = {
@@ -128,6 +308,12 @@ in {
       ktx = "kubectx";
       htop = "btop";
       neofetch = "fastfetch";
+      # eza aliases — override ls for icons + color
+      ls = "eza --icons --group-directories-first";
+      ll = "eza -la --icons --group-directories-first --git";
+      lt = "eza -T --icons --group-directories-first --level=2";
+      la = "eza -a --icons --group-directories-first";
+      lg = "lazygit";
       # override uname for zed
       uname = "^uname";
     };

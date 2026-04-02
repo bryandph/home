@@ -10,9 +10,9 @@ _: {
       fill.symbol = " ";
 
       continuation_prompt = "[▸▹ ](dimmed white)";
-      format = "($nix_shell$container$fill$git_metrics\n)$cmd_duration$hostname$localip$shlvl$shell$env_var$jobs$sudo$username$character";
+      format = "($nix_shell$container$kubernetes$fill$git_metrics\n)$cmd_duration$hostname$localip$shlvl$shell$env_var$jobs$sudo$username$character";
 
-      right_format = ''$singularity$kubernetes$directory$vcsh$fossil_branch$git_branch$git_commit$git_state$git_status$hg_branch$pijul_channel$docker_context$package$c$cpp$cmake$cobol$daml$dart$deno$dotnet$elixir$elm$erlang$fennel$golang$guix_shell$haskell$haxe$helm$java$julia$kotlin$gradle$lua$nim$nodejs$ocaml$opa$perl$php$pulumi$purescript$python$raku$rlang$red$ruby$rust$scala$solidity$swift$terraform$vlang$vagrant$zig$buf$conda$pixi$meson$spack$memory_usage$aws$gcloud$openstack$azure$crystal$custom$status$os$battery$time'';
+      right_format = ''$singularity$directory$vcsh$fossil_branch$git_branch$git_commit$git_state$git_status$hg_branch$pijul_channel$docker_context$package$c$cpp$cmake$cobol$daml$dart$deno$dotnet$elixir$elm$erlang$fennel$golang$guix_shell$haskell$haxe$helm$java$julia$kotlin$gradle$lua$nim$nodejs$ocaml$opa$perl$php$pulumi$purescript$python$raku$rlang$red$ruby$rust$scala$solidity$swift$terraform$vlang$vagrant$zig$buf$conda$pixi$meson$spack$memory_usage$aws$gcloud$openstack$azure$crystal$custom$status$os$battery$time'';
 
       character = {
         format = "$symbol ";
@@ -128,6 +128,34 @@ _: {
         staged = "[▪┤[$count](bold white)│](italic bright-cyan)";
         renamed = "[◎◦](italic bright-blue)";
         deleted = "[✕](italic red)";
+      };
+
+      kubernetes = {
+        disabled = false;
+        format = "[⎈ $context](italic bright-cyan)( [$namespace](italic dimmed cyan)) ";
+        context_aliases = {};
+        detect_files = ["k8s" "kubernetes"];
+        detect_folders = [];
+        detect_env_vars = ["KUBECONFIG"];
+      };
+
+      rust = {
+        format = " [rs](italic) [\${symbol}\${version}]($style)";
+        version_format = "\${raw}";
+        symbol = "⊛ ";
+        style = "bold bright-red";
+      };
+
+      nix_shell = {
+        format = "[◊ $state( $name)](italic bright-purple) ";
+        impure_msg = "impure";
+        pure_msg = "pure";
+        unknown_msg = "nix";
+      };
+
+      container = {
+        format = "[⬡ $name]($style) ";
+        style = "italic dimmed bright-cyan";
       };
 
       deno = {

@@ -3,15 +3,16 @@
   imports = [
     ./git.nix
     ./gpg.nix
+    ./helix.nix
     ./nix.nix
     ./nushell.nix
     ./starship.nix
+    ./tmux.nix
     ./gptcommit.nix
     ./workmux.nix
   ];
   config = {
     programs = {
-      helix.enable = true;
       uv.enable = true;
       btop.enable = true;
       direnv = {
@@ -25,10 +26,7 @@
         enableNushellIntegration = true;
       };
       gpg.enable = true;
-      zellij = {
-        enable = true;
-        settings.default_mode = "tmux";
-      };
+      # zellij removed — using tmux as primary multiplexer
       jq.enable = true;
       k9s.enable = true;
       kubecolor.enable = true;
@@ -45,7 +43,6 @@
     home = {
       packages = with pkgs; [
         # Development Tools
-        helix
         just
         bacon
         evcxr
@@ -102,7 +99,6 @@
         minio-client
         gptcommit
         yamlfmt
-        tmux
         mprocs
         wiki-tui
         speedtest-rs

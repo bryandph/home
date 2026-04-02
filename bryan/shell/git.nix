@@ -49,6 +49,27 @@
     delta = {
       enable = true;
       enableGitIntegration = true;
+      options = {
+        navigate = true;
+        line-numbers = true;
+        side-by-side = false;
+        line-numbers-left-format = " {nm:>3} │";
+        line-numbers-right-format = " {np:>3} │";
+        line-numbers-minus-style = "red italic";
+        line-numbers-plus-style = "green italic";
+        line-numbers-zero-style = "brightblack italic";
+        minus-emph-style = "syntax bold red";
+        plus-emph-style = "syntax bold green";
+        hunk-header-style = "blue bold";
+        hunk-header-decoration-style = "blue box";
+        file-style = "yellow bold";
+        file-decoration-style = "yellow ul";
+        blame-format = "{author:<18} {commit:<8} {timestamp:<15} │";
+        merge-conflict-begin-symbol = "◆";
+        merge-conflict-end-symbol = "◇";
+        merge-conflict-ours-diff-header-style = "yellow bold";
+        merge-conflict-theirs-diff-header-style = "magenta bold";
+      };
     };
   };
 }

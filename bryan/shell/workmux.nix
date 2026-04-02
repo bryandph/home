@@ -23,6 +23,7 @@ in {
         - command: <agent>
           focus: true
         - split: horizontal
+      nerdfont: true
     '';
   };
 }

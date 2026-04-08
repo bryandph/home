@@ -17,7 +17,6 @@ home/
     │   ├── ghostty.nix    # Ghostty terminal
     │   ├── git.nix        # Git configuration
     │   ├── gpg.nix        # GPG agent and keys
-    │   ├── gptcommit.nix  # AI commit message generation
     │   ├── nix.nix        # Nix-related shell tools
     │   ├── nushell.nix    # Nushell configuration
     │   ├── starship.nix   # Starship prompt

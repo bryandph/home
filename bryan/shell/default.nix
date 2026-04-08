@@ -8,7 +8,6 @@
     ./nushell.nix
     ./starship.nix
     ./tmux.nix
-    ./gptcommit.nix
     ./workmux.nix
   ];
   config = {
@@ -97,7 +96,6 @@
         sshpass
         step-cli
         minio-client
-        gptcommit
         yamlfmt
         mprocs
         wiki-tui

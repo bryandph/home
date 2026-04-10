@@ -18,6 +18,9 @@
       window-padding-y = 4;
       confirm-close-surface = false;
 
+      # Launch nushell instead of the macOS default login shell (zsh)
+      command = "nu";
+
       # Nushell has built-in shell integration (OSC 133); Ghostty's
       # auto-inject only supports bash/zsh/fish/elvish
       shell-integration = "none";

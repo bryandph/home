@@ -1,4 +1,4 @@
-{lib, ...}: {
+{lib, pkgs, ...}: {
   programs.ghostty = {
     enable = true;
     package = lib.mkForce null; # installed via Homebrew cask
@@ -19,7 +19,7 @@
       confirm-close-surface = false;
 
       # Launch nushell instead of the macOS default login shell (zsh)
-      command = "nu";
+      command = lib.getExe pkgs.nushell;
 
       # Nushell has built-in shell integration (OSC 133); Ghostty's
       # auto-inject only supports bash/zsh/fish/elvish

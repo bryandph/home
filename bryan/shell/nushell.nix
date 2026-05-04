@@ -72,6 +72,7 @@ in {
     enable = true;
 
     environmentVariables = {
+      LANG = "en_US.UTF-8";
       EDITOR = "hx";
       VAULT_ADDR = "https://vault.bph:8200";
       OPENAI_API_KEY = "ollama";

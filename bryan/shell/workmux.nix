@@ -19,10 +19,15 @@ in {
     xdg.configFile."workmux/config.yaml".text = ''
       agent: claude
       merge_strategy: rebase
+      mode: session
       panes:
         - command: <agent>
           focus: true
-        - split: horizontal
+        - command: lazygit
+          split: horizontal
+          size: 25
+        - split: vertical
+          size: 50
       nerdfont: true
     '';
   };

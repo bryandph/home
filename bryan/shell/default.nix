@@ -37,6 +37,10 @@
         enable = true;
         enableNushellIntegration = true;
       };
+      yazi = {
+        enable = true;
+        enableNushellIntegration = true;
+      };
     };
 
     home = {

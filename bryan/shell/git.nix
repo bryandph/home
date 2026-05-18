@@ -41,7 +41,7 @@
         submodule.recurse = "true";
         url = {
           "git@github.com:".insteadOf = ["gh:" "https://github.com/"];
-          "git@git.bph:".insteadOf = "bph:";
+          "git@git.bph:".insteadOf = ["bph:" "https://git.bph/"];
         };
         status.submoduleSummary = true;
       };

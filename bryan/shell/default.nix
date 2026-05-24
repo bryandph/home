@@ -7,6 +7,7 @@
     ./nix.nix
     ./nushell.nix
     ./starship.nix
+    ./sesh.nix
     ./tmux.nix
     ./workmux.nix
   ];

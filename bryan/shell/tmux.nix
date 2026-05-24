@@ -20,6 +20,7 @@
         plugin = resurrect;
         extraConfig = ''
           set -g @resurrect-capture-pane-contents 'on'
+          set -g @resurrect-processes 'hx lazygit btop k9s workmux'
         '';
       }
       {
@@ -54,9 +55,9 @@
       bind -T copy-mode-vi C-v send-keys -X rectangle-toggle
       bind -T copy-mode-vi y send-keys -X copy-selection-and-cancel
 
-      # ── Splits (vim-style v/s) ──────────────────────────────────
+      # ── Splits (v = horizontal, - = vertical) ───────────────────
       bind-key v split-window -h -c "#{pane_current_path}"
-      bind-key s split-window -v -c "#{pane_current_path}"
+      bind-key - split-window -v -c "#{pane_current_path}"
       bind c new-window -c "#{pane_current_path}"
 
       # ── Pane resizing ───────────────────────────────────────────
@@ -97,7 +98,7 @@
 
       # ── Quick actions ───────────────────────────────────────────
       bind r source-file ~/.config/tmux/tmux.conf \; display "◎ reloaded"
-      bind f display-popup -E -w 80% -h 80% "tmux list-sessions | fzf --reverse | cut -d: -f1 | xargs tmux switch-client -t"
+      # prefix+s → sesh (managed by programs.sesh.enableTmuxIntegration)
       bind g display-popup -E -w 90% -h 90% -d "#{pane_current_path}" lazygit
       bind b display-popup -E -w 90% -h 90% -d "#{pane_current_path}" btop
 

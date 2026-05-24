@@ -3,6 +3,7 @@
 
   programs.sesh = {
     enable = true;
+    enableAlias = false;
     enableTmuxIntegration = true;
     tmuxKey = "s";
     icons = true;

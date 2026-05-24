@@ -1,4 +1,4 @@
-{...}: {
+_: {
   programs.fzf.tmux.enableShellIntegration = true;
 
   programs.sesh = {

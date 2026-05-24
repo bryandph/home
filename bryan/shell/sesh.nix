@@ -1,4 +1,6 @@
 {...}: {
+  programs.fzf.tmux.enableShellIntegration = true;
+
   programs.sesh = {
     enable = true;
     enableTmuxIntegration = true;

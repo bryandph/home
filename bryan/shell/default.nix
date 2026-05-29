@@ -88,6 +88,7 @@
         lazygit
         unixtools.arp
         tree
+        pv # Pipe viewer — progress for dd/zstd pipes
 
         # Container Tools
         dive

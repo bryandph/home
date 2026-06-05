@@ -119,6 +119,16 @@
         hexyl
         nix-search-cli
 
+        # TUIs
+        systemctl-tui # systemd units + per-unit logs
+        lazyjournal # journald/container log browser
+        trippy # mtr-style traceroute/ping
+        bandwhich # per-process/per-connection bandwidth
+        sshs # ssh-config host picker
+        jqp # interactive jq playground
+        dua # interactive disk usage (dua i)
+        atac # postman-like API client
+
         # Security Tools
         nmap
         rustscan

@@ -129,6 +129,21 @@
         dua # interactive disk usage (dua i)
         atac # postman-like API client
 
+        # Networking
+        mtr # classic traceroute+ping TUI
+        doggo # modern dig — DoH/DoT, JSON output
+        dnsutils # dig + nslookup
+        termshark # TUI wireshark frontend
+        tcpdump
+        wireshark-cli # tshark — dissectors without the TUI
+        iperf3 # point-to-point throughput testing
+        nload # per-interface live traffic graphs
+        fping # parallel ping sweeps across host lists
+        arp-scan # L2 host discovery on the local segment
+        socat # bidirectional relay swiss-army knife
+        ipcalc # subnet math — CIDR splits, ranges, masks
+        xh # httpie-style HTTP client
+
         # Security Tools
         nmap
         rustscan

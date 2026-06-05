@@ -56,10 +56,11 @@
         # Kubernetes Tools
         kubectl
         kubectx
-        kubernetes-helm
+        (wrapHelm kubernetes-helm { plugins = [ kubernetes-helmPlugins.helm-diff ]; }) # helm-diff backs the k9s helm-diff plugins
         kubeconform
         kustomize
         kompose
+        stern # multi-pod log tailing — k9s Ctrl-Y plugin
 
         # Cloud Tools
         # awscli

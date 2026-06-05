@@ -4,6 +4,7 @@
     ./git.nix
     ./gpg.nix
     ./helix.nix
+    ./k9s.nix
     ./nix.nix
     ./nushell.nix
     ./starship.nix
@@ -28,7 +29,6 @@
       gpg.enable = true;
       # zellij removed — using tmux as primary multiplexer
       jq.enable = true;
-      k9s.enable = true;
       kubecolor.enable = true;
       zed-editor = {
         enable = true;

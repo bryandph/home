@@ -1,42 +1,70 @@
 # Home Manager Configurations
 
-This directory contains a separate flake for Home Manager configurations that can be used standalone or imported by other flakes.
+This directory contains a separate flake for Home Manager configurations that
+can be used standalone or imported by other flakes. It follows the
+[dendritic pattern](https://github.com/mightyiam/dendritic): every `.nix` file
+under `modules/` is a top-level flake-parts module, auto-discovered via
+[import-tree](https://github.com/vic/import-tree) — there are no manual import
+lists.
 
 ## Structure
 
 ```
 home/
-├── flake.nix              # Main flake definition
-├── flake-parts/           # Flake-parts modules for home outputs
-└── bryan/
-    ├── default.nix        # Base home configuration (shell only)
-    ├── darwin.nix         # macOS-specific home configuration
-    ├── with-de.nix        # Home configuration with desktop environment
-    ├── shell/             # Shell configurations
-    │   ├── default.nix    # Shell module entry point
-    │   ├── ghostty.nix    # Ghostty terminal
-    │   ├── git.nix        # Git configuration
-    │   ├── gpg.nix        # GPG agent and keys
-    │   ├── nix.nix        # Nix-related shell tools
-    │   ├── nushell.nix    # Nushell configuration
-    │   ├── starship.nix   # Starship prompt
-    │   └── workmux.nix    # Workmux terminal multiplexer
-    └── de/                # Desktop environment configurations
+├── flake.nix                  # Inputs + import-tree ./modules (no logic)
+└── modules/
+    ├── flake-parts.nix        # Bootstrap: systems + third-party flakeModules
+    ├── meta/                  # Identity options (meta.user.*)
+    │   ├── _defaults.nix      #   single source of the operator identity
+    │   ├── _hm-module.nix     #   HM-level option declarations
+    │   └── options.nix        #   flake-level options + the `meta` HM feature
+    ├── infrastructure/        # Plumbing
+    │   ├── home-manager.nix   #   configurations.home factory -> homeConfigurations + checks
+    │   ├── exports.nix        #   homeModules / flakeModules.default / lib shims
+    │   ├── apps.nix           #   nix run .#<app> maintenance apps
+    │   └── treefmt.nix        #   nix fmt -> treefmt -> alejandra
+    ├── shell/                 # Feature modules: git, gpg, helix, k9s,
+    │                          #   nix-tools, nushell, sesh, starship, tmux,
+    │                          #   workmux, ghostty, packages
+    ├── de/                    # Feature modules: hyprland, kitty, chromium, wofi
+    ├── presets/               # Bundles: shell, de (pure imports, no gates)
+    ├── profiles/              # Coarse exports: bryan, bryan-with-de, bryan-darwin
+    └── configurations/        # Standalone homeConfigurations: bryan, bryan-darwin
 ```
 
-## Available Modules
+Each feature module sets `flake.modules.homeManager.<name>`; composition is by
+import (no `enable` gates). Files/dirs prefixed with `_` are helpers skipped by
+import-tree and imported by path where needed.
 
-The following home modules are exported:
+## Identity (`meta.user.*`)
 
-- **`bryan`**: Base home configuration for Linux (shell tools only)
-- **`bryan-with-de`**: Extended home configuration with desktop environment
-- **`bryan-darwin`**: macOS-specific home configuration
-- **`bryan-shell`**: Just shell configurations
-- **`bryan-de`**: Just desktop environment configurations
+User identity lives in HM-level options — `meta.user.{name, email, fullname,
+gpgFingerprint}` — mirroring the option names of nixspace's `modules/meta.nix`.
+Defaults are the operator identity; consumers override them with ordinary
+module definitions (the legacy `globals` extraSpecialArgs pass-thru is gone,
+but the `lib` shims still translate it for old call sites).
+
+## Exports
+
+Tier-1 (classic, stable contract):
+
+- **`homeModules.bryan`** — base Linux home (shell tools only)
+- **`homeModules.bryan-with-de`** — bryan + desktop environment
+- **`homeModules.bryan-darwin`** — macOS home
+- **`nixos-modules.{bryan-shell, bryan-de}`** — legacy aliases for the shell/de
+  bundles (they are HM modules; prefer homeModules)
+- **`lib.mkHomeConfiguration{,WithGlobals}`** — compat constructors taking the
+  legacy `globals` attrset
+
+Tier-2 (dendritic consumers):
+
+- **`flakeModules.default`** — a flake-parts module that re-exports the coarse
+  profiles into the consumer's own `flake.modules.homeManager.*` tree.
 
 ## Usage in NixOS
 
-The home modules are automatically included via `home-manager.sharedModules` in NixOS configurations:
+The home modules are included via `home-manager.sharedModules` in nixspace
+NixOS configurations:
 
 - Systems with `withDE = false` (wsl, servers, most SBCs) use the `bryan` module
 - Systems with `withDE = true` (panda, dell, uconsole) use the `bryan-with-de` module
@@ -57,6 +85,8 @@ home-manager switch --flake ./home#bryan-darwin
 
 ### Importing in Other Flakes
 
+Classic consumption:
+
 ```nix
 {
   inputs = {
@@ -67,7 +97,6 @@ home-manager switch --flake ./home#bryan-darwin
   };
 
   outputs = {home-configs, ...}: {
-    # Use the modules
     homeConfigurations.myuser = home-configs.lib.mkHomeConfiguration {
       system = "x86_64-linux";
       modules = [
@@ -83,13 +112,22 @@ home-manager switch --flake ./home#bryan-darwin
 }
 ```
 
-## Development
+Dendritic consumption (flake-parts):
 
-Use the development shell to work on configurations:
-
-```bash
-cd home
-nix develop
+```nix
+{
+  imports = [inputs.home-configs.flakeModules.default];
+  # then compose, e.g.:
+  #   configurations.nixos.<host>.module.imports =
+  #     [config.flake.modules.homeManager.bryan];
+}
 ```
 
-This provides access to `home-manager` and shows available commands.
+## Maintenance
+
+```bash
+nix fmt              # treefmt -> alejandra
+nix flake check      # builds the standalone configurations as checks
+nix run .#home-switch        # home-manager switch .#bryan
+nix run .#home-switch-darwin # home-manager switch .#bryan-darwin
+```

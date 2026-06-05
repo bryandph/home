@@ -7,7 +7,7 @@
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
-    flake-root.url = "github:srid/flake-root";
+    import-tree.url = "github:vic/import-tree";
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -21,8 +21,8 @@
       url = "github:nix-community/stylix/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-darwin = {
-      url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-auto-follow = {
@@ -37,151 +37,10 @@
     };
   };
 
-  outputs = inputs @ {flake-parts, ...}: let
-    # Global configuration - can be overridden when importing this flake
-    defaultGlobals = {
-      user = "bryan";
-      fullname = "Bryan Prather-Huff";
-      email = "bryan@pratherhuff.com";
-      gpg_thumbprint = "6ADCBDDF44590F83";
-      sshPublicKey = builtins.readFile (
-        builtins.fetchurl {
-          url = "https://github.com/bryandph.keys";
-          sha256 = "198i0v7zwk8ziqlyx001rrw2rpfnsna3v4n7gz3scf2s28d0zana";
-        }
-      );
-    };
-  in
-    flake-parts.lib.mkFlake {inherit inputs;} {
-      systems = [
-        "aarch64-darwin"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "x86_64-linux"
-      ];
-
-      imports = [
-        inputs.flake-root.flakeModule
-        inputs.home-manager.flakeModules.home-manager
-        ./flake-parts
-      ];
-
-      _module.args = {
-        globals = defaultGlobals;
-      };
-
-      flake = {
-        # Home modules that can be imported by other flakes
-        homeModules = {
-          bryan = ./bryan;
-          bryan-with-de = ./bryan/with-de.nix;
-          bryan-darwin = ./bryan/darwin.nix;
-        };
-
-        nixos-modules = {
-          bryan-shell = ./bryan/shell;
-          bryan-de = ./bryan/de;
-        };
-
-        # Function to create home configurations (for use by importing flakes)
-        lib = {
-          # Function to create home configurations with custom globals
-          mkHomeConfiguration = {
-            system,
-            modules,
-            globals ? defaultGlobals,
-            extraSpecialArgs ? {},
-          }:
-            inputs.home-manager.lib.homeManagerConfiguration {
-              pkgs = inputs.nixpkgs.legacyPackages.${system};
-              extraSpecialArgs =
-                {
-                  inherit globals;
-                }
-                // extraSpecialArgs;
-              modules =
-                modules
-                ++ [
-                  inputs.sops-nix.homeManagerModules.sops
-                  {
-                    programs.workmux = {
-                      enable = true;
-                      package = inputs.workmux.packages.${system}.default;
-                    };
-                  }
-                ];
-            };
-
-          # Helper to create configurations with different globals
-          mkHomeConfigurationWithGlobals = globals: {
-            system,
-            modules,
-            extraSpecialArgs ? {},
-          }:
-            inputs.home-manager.lib.homeManagerConfiguration {
-              pkgs = inputs.nixpkgs.legacyPackages.${system};
-              extraSpecialArgs =
-                {
-                  inherit globals;
-                }
-                // extraSpecialArgs
-                // {globals = defaultGlobals // globals;};
-              modules =
-                modules
-                ++ [
-                  inputs.sops-nix.homeManagerModules.sops
-                  {
-                    programs.workmux = {
-                      enable = true;
-                      package = inputs.workmux.packages.${system}.default;
-                    };
-                  }
-                ];
-            };
-        };
-
-        # Standalone home configurations
-        homeConfigurations = {
-          # NixOS home configuration
-          "${defaultGlobals.user}" = inputs.home-manager.lib.homeManagerConfiguration {
-            pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-            extraSpecialArgs = {
-              inherit (defaultGlobals) user;
-              globals = defaultGlobals;
-            };
-            modules = [
-              ./bryan
-              inputs.sops-nix.homeManagerModules.sops
-              inputs.stylix.homeModules.stylix
-              {
-                programs.workmux = {
-                  enable = true;
-                  package = inputs.workmux.packages.x86_64-linux.default;
-                };
-              }
-            ];
-          };
-
-          # Darwin home configuration
-          "${defaultGlobals.user}-darwin" = inputs.home-manager.lib.homeManagerConfiguration {
-            pkgs = inputs.nix-darwin.legacyPackages.aarch64-darwin;
-            extraSpecialArgs = {
-              inherit (defaultGlobals) user;
-              globals = defaultGlobals;
-            };
-            modules = [
-              ./bryan/darwin.nix
-              inputs.sops-nix.homeManagerModules.sops
-              inputs.stylix.homeModules.stylix
-              {
-                programs.workmux = {
-                  enable = true;
-                  package = inputs.workmux.packages.aarch64-darwin.default;
-                };
-              }
-            ];
-          };
-        };
-      };
-    };
+  outputs = inputs @ {
+    flake-parts,
+    import-tree,
+    ...
+  }:
+    flake-parts.lib.mkFlake {inherit inputs;} (import-tree ./modules);
 }

@@ -1,5 +1,11 @@
 {
-  flake.modules.homeManager.git = {config, ...}: {
+  flake.modules.homeManager.git = {
+    config,
+    pkgs,
+    ...
+  }: {
+    home.packages = [pkgs.git-spice];
+
     programs = {
       git = {
         enable = true;

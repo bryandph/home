@@ -196,6 +196,44 @@
         "type": "github"
       }
     },
+    "mandala": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781062454,
+        "narHash": "sha256-1ROPTP2eDPl3usVjhzrGf2UMpPRpPeAIuKD1yXufMck=",
+        "ref": "refs/heads/main",
+        "rev": "08dada619c79e7640499a3ab9b5b70b772c72a80",
+        "revCount": 1,
+        "type": "git",
+        "url": "https://git.bph/bryan/mandala"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://git.bph/bryan/mandala"
+      }
+    },
+    "mandala-bph": {
+      "inputs": {
+        "mandala": "mandala"
+      },
+      "locked": {
+        "lastModified": 1781062600,
+        "narHash": "sha256-Cxh56oH0phWoi5j/wYD3DHnCpHRrDORLETAHa0/KzHg=",
+        "ref": "refs/heads/main",
+        "rev": "46cb0a1de7be71366de3d880dbd7c4afb191e960",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@git.bph/bryan/mandala-bph"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@git.bph/bryan/mandala-bph"
+      }
+    },
     "nix-auto-follow": {
       "inputs": {
         "nixpkgs": [
@@ -278,6 +316,7 @@
         "flake-parts": "flake-parts",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
+        "mandala-bph": "mandala-bph",
         "nix-auto-follow": "nix-auto-follow",
         "nixpkgs": "nixpkgs",
         "sops-nix": "sops-nix",

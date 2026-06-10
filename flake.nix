@@ -32,6 +32,12 @@
         flake-utils.inputs.systems.follows = "systems";
       };
     };
+    # Fleet contract data (operator identity). Private repo on git.bph;
+    # re-exports the mandala engine, so this is the only pin needed.
+    mandala-bph = {
+      url = "git+ssh://git@git.bph/bryan/mandala-bph";
+      inputs.mandala.inputs.nixpkgs.follows = "nixpkgs";
+    };
     workmux = {
       url = "github:raine/workmux";
     };

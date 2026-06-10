@@ -8,30 +8,30 @@
 # Kept as a path-imported file (referenced by `flake.modules.homeManager.meta`
 # AND by the lib compat shim) so the module system deduplicates it by path —
 # importing it via two routes in one eval must not redeclare the options.
+#
+# Declarations only — no defaults. Values arrive from the mandala-bph fleet
+# contract via the `meta` feature wrapper (./options.nix), from the factory
+# injection (infrastructure/home-manager.nix), or from the globals shim
+# (infrastructure/exports.nix).
 {lib, ...}: let
-  defaults = import ./_defaults.nix;
   inherit (lib) mkOption types;
 in {
   options.meta.user = {
     name = mkOption {
       type = types.str;
-      default = defaults.name;
       description = "Primary user account name.";
     };
     email = mkOption {
       type = types.str;
-      default = defaults.email;
       description = "Primary user email.";
     };
     fullname = mkOption {
       type = types.str;
-      default = defaults.fullname;
       description = "Display name.";
     };
     gpgFingerprint = mkOption {
       type = types.str;
-      default = defaults.gpgFingerprint;
-      description = "GPG primary key fingerprint (uppercase hex, no spaces).";
+      description = "Full GPG primary key fingerprint (uppercase hex, no spaces).";
     };
   };
 }

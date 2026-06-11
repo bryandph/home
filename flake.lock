@@ -203,17 +203,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1781062454,
-        "narHash": "sha256-1ROPTP2eDPl3usVjhzrGf2UMpPRpPeAIuKD1yXufMck=",
-        "ref": "refs/heads/main",
-        "rev": "08dada619c79e7640499a3ab9b5b70b772c72a80",
-        "revCount": 1,
-        "type": "git",
-        "url": "https://git.bph/bryan/mandala"
+        "lastModified": 1781165053,
+        "narHash": "sha256-SePzdpc9Z5Ubl1a47oJGvK7q4iy/Vu0GWMVFmhKVe8E=",
+        "owner": "bryandph",
+        "repo": "mandala",
+        "rev": "67b16e039b2e892c0b50357f4d35765b799c9cfc",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "https://git.bph/bryan/mandala"
+        "owner": "bryandph",
+        "repo": "mandala",
+        "type": "github"
       }
     },
     "mandala-bph": {
@@ -221,11 +221,11 @@
         "mandala": "mandala"
       },
       "locked": {
-        "lastModified": 1781062600,
-        "narHash": "sha256-Cxh56oH0phWoi5j/wYD3DHnCpHRrDORLETAHa0/KzHg=",
+        "lastModified": 1781165090,
+        "narHash": "sha256-zOO6N0e9zg08ppgPr27p6vGqxulq6nkdYrebh4+hqAM=",
         "ref": "refs/heads/main",
-        "rev": "46cb0a1de7be71366de3d880dbd7c4afb191e960",
-        "revCount": 1,
+        "rev": "6b0ca6be4956327f897f54e210aedc572e610f87",
+        "revCount": 8,
         "type": "git",
         "url": "ssh://git@git.bph/bryan/mandala-bph"
       },

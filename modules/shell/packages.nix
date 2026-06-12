@@ -73,7 +73,6 @@
           ripgrep-all
           direnv
           nix-direnv
-          rustscan
           lazygit
           unixtools.arp
           tree
@@ -136,6 +135,7 @@
           nmap
           rustscan
           git-filter-repo
+          betterleaks # secret scanner for code/repos
         ];
       };
     };

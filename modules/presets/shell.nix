@@ -10,6 +10,7 @@
       gpg
       helix
       k9s
+      neovim
       nix-tools
       nushell
       sesh

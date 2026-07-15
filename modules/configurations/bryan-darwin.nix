@@ -20,6 +20,11 @@
         enable = true;
         package = inputs.workmux.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
+
+      programs.herdr = {
+        enable = true;
+        package = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      };
     };
   };
 }

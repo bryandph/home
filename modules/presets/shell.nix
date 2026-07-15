@@ -9,6 +9,7 @@
       git
       gpg
       helix
+      herdr
       k9s
       neovim
       nix-tools

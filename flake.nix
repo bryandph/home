@@ -38,6 +38,20 @@
       url = "git+ssh://git@git.bph/bryan/mandala-bph";
       inputs.mandala.inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Agentic environment core (bryan/nixspace#85): shared MCP/agent
+    # registry definitions. Direct pin for standalone eval (design Open
+    # Question 3 resolved: same shape as mandala-bph); the parent
+    # follows-dedupes it when composed. Consumption of the user-plane
+    # modules lands with bryan/nixspace#86.
+    agentic = {
+      url = "git+ssh://git@git.bph/bryan/agentic";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        import-tree.follows = "import-tree";
+        treefmt-nix.follows = "treefmt-nix";
+      };
+    };
     workmux = {
       url = "github:raine/workmux";
     };

@@ -12,6 +12,20 @@
 # workmux's snake_case keys. Keys workmux grows that aren't typed yet go
 # in `extraConfig` (same YAML namespace; typed/freeform key conflicts
 # fail evaluation).
+#
+# Job watching (nixspace#86 D8 outcome, verified 2026-07-15): to run and
+# watch a long task in a worktree, use the shipped primitives — `workmux
+# run <wt> -- <cmd>` opens a split pane beside the agent, streams output
+# to the caller, and propagates completion (`-b` to background,
+# `--timeout` to bound); `workmux send/capture/wait` drive and observe
+# the agent itself; interactive tools ride `programs.herdr.commands`
+# pane shortcuts. No extra wrapper: window status carries *agent*
+# semantics — a job-completion flag in the same window would fight the
+# agent's own status hooks. Note: agents appear in `workmux
+# status`/`wait` once their first status hook fires (registration rides
+# `set-window-status`); on a fresh host workmux's first `add` asks to
+# install status hooks — answer no, they are delivered by
+# `agentic.statusHooks`.
 {
   lib,
   config,

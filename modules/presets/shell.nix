@@ -6,6 +6,8 @@
 {config, ...}: {
   flake.modules.homeManager.shell = {
     imports = with config.flake.modules.homeManager; [
+      agent-status-hooks
+      agent-status-sounds
       git
       gpg
       helix

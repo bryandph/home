@@ -1,64 +1,160 @@
+# Vendored `programs.herdr` HM module — typed options over
+# `~/.config/herdr/config.toml` (bryan/nixspace#86, capability
+# agentic-user-tools). Option defaults reproduce the previously
+# hand-maintained config, so enabling the module is behavior-preserving.
+#
+# One writer per file: NEVER run `herdr integration install` on managed
+# hosts — it writes into Claude Code's ~/.claude/settings.json, which must
+# stay Claude-writable (agent state comes from herdr's manifest-based
+# detection instead; overrides go in `agentDetection`). The package stays
+# consumer-supplied (flake input / overlay).
+#
+# Default keybindings mirror shell/tmux.nix: ctrl+a prefix, vim pane focus
+# with no-prefix alt+vim/alt+arrow fallbacks, shift+arrows for tab
+# switching, and lazygit/btop on prefix+g/b. Herdr defaults that already
+# match tmux (new_tab c, split v/-, focus hjkl, zoom z, copy-mode [,
+# switch_tab 1..9) are left unset. To make room for the popups: goto moves
+# g → f and toggle_sidebar moves b → e.
 {
   lib,
   config,
+  pkgs,
   ...
 }: let
   cfg = config.programs.herdr;
+  tomlFormat = pkgs.formats.toml {};
+
+  keyBinding = lib.types.either lib.types.str (lib.types.listOf lib.types.str);
+
+  commandType = lib.types.submodule {
+    options = {
+      key = lib.mkOption {
+        type = lib.types.str;
+        description = "Key chord (e.g. \"prefix+g\").";
+      };
+      type = lib.mkOption {
+        type = lib.types.enum ["pane" "popup"];
+        default = "pane";
+        description = "How the command opens.";
+      };
+      command = lib.mkOption {
+        type = lib.types.str;
+        description = "Command to run.";
+      };
+      description = lib.mkOption {
+        type = lib.types.str;
+        description = "Label shown in herdr's key help.";
+      };
+    };
+  };
+
+  typedSettings =
+    {
+      keys =
+        cfg.keys
+        // lib.optionalAttrs (cfg.commands != []) {
+          command = cfg.commands;
+        };
+    }
+    // lib.optionalAttrs (cfg.terminal != {}) {terminal = cfg.terminal;};
+
+  conflictingKeys = lib.intersectLists (lib.attrNames typedSettings) (lib.attrNames cfg.extraConfig);
 in {
   options.programs.herdr = {
     enable = lib.mkEnableOption "herdr";
+
     package = lib.mkOption {
       type = lib.types.package;
       description = "The herdr package";
     };
+
+    keys = lib.mkOption {
+      type = lib.types.attrsOf keyBinding;
+      default = {
+        prefix = "ctrl+a";
+        # tmux detaches on prefix+d; keep herdr's prefix+q too
+        detach = ["prefix+d" "prefix+q"];
+        # no-prefix pane focus (tmux: bind -n M-h/j/k/l + M-arrows)
+        focus_pane_left = ["prefix+h" "alt+h" "alt+left"];
+        focus_pane_down = ["prefix+j" "alt+j" "alt+down"];
+        focus_pane_up = ["prefix+k" "alt+k" "alt+up"];
+        focus_pane_right = ["prefix+l" "alt+l" "alt+right"];
+        # no-prefix tab switching (tmux: bind -n S-Left/S-Right)
+        previous_tab = ["prefix+p" "shift+left"];
+        next_tab = ["prefix+n" "shift+right"];
+        # displaced by the lazygit/btop command bindings
+        goto = "prefix+f";
+        toggle_sidebar = "prefix+e";
+      };
+      description = "Action → key chord(s) for herdr's [keys] section (tmux-parity defaults).";
+    };
+
+    commands = lib.mkOption {
+      type = lib.types.listOf commandType;
+      default = [
+        {
+          key = "prefix+g";
+          type = "pane";
+          command = "lazygit";
+          description = "lazygit";
+        }
+        {
+          key = "prefix+b";
+          type = "pane";
+          command = "btop";
+          description = "btop";
+        }
+      ];
+      description = "Command shortcuts rendered as [[keys.command]] tables.";
+    };
+
+    terminal = lib.mkOption {
+      type = tomlFormat.type;
+      default = {
+        default_shell = "nu";
+        # tmux parity: splits/tabs open in the pane's cwd (#{pane_current_path})
+        new_cwd = "follow";
+      };
+      description = "The [terminal] section, verbatim (herdr key names).";
+    };
+
+    agentDetection = lib.mkOption {
+      type = lib.types.attrsOf lib.types.path;
+      default = {};
+      example = lib.literalExpression ''{ "claude.toml" = ./herdr/claude-detection.toml; }'';
+      description = "Agent-detection manifest overrides installed under ~/.config/herdr/agent-detection/.";
+    };
+
+    extraConfig = lib.mkOption {
+      type = tomlFormat.type;
+      default = {};
+      description = "Freeform herdr config merged with the typed sections. Setting a top-level key both ways fails evaluation.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = conflictingKeys == [];
+        message = "programs.herdr: key(s) set both as typed option and in extraConfig: ${lib.concatStringsSep ", " conflictingKeys}";
+      }
+      {
+        assertion = !(cfg.keys ? command);
+        message = "programs.herdr: declare command shortcuts via programs.herdr.commands, not keys.command.";
+      }
+    ];
+
     home.packages = [cfg.package];
 
-    # Keybindings mirror shell/tmux.nix: ctrl+a prefix, vim pane focus with
-    # no-prefix alt+vim/alt+arrow fallbacks, shift+arrows for tab switching,
-    # v/- splits, and lazygit/btop on prefix+g/b. Herdr defaults that already
-    # match tmux (new_tab c, split v/-, focus hjkl, zoom z, copy-mode [,
-    # switch_tab 1..9) are left unset. To make room for the popups:
-    # goto moves g → f and toggle_sidebar moves b → e.
-    xdg.configFile."herdr/config.toml".text = ''
-      [keys]
-      prefix = "ctrl+a"
-
-      # tmux detaches on prefix+d; keep herdr's prefix+q too
-      detach = ["prefix+d", "prefix+q"]
-
-      # no-prefix pane focus (tmux: bind -n M-h/j/k/l + M-arrows)
-      focus_pane_left = ["prefix+h", "alt+h", "alt+left"]
-      focus_pane_down = ["prefix+j", "alt+j", "alt+down"]
-      focus_pane_up = ["prefix+k", "alt+k", "alt+up"]
-      focus_pane_right = ["prefix+l", "alt+l", "alt+right"]
-
-      # no-prefix tab switching (tmux: bind -n S-Left/S-Right)
-      previous_tab = ["prefix+p", "shift+left"]
-      next_tab = ["prefix+n", "shift+right"]
-
-      # displaced by the lazygit/btop bindings below
-      goto = "prefix+f"
-      toggle_sidebar = "prefix+e"
-
-      [[keys.command]]
-      key = "prefix+g"
-      type = "pane"
-      command = "lazygit"
-      description = "lazygit"
-
-      [[keys.command]]
-      key = "prefix+b"
-      type = "pane"
-      command = "btop"
-      description = "btop"
-
-      [terminal]
-      default_shell = "nu"
-      # tmux parity: splits/tabs open in the pane's cwd (#{pane_current_path})
-      new_cwd = "follow"
-    '';
+    xdg.configFile =
+      {
+        "herdr/config.toml".source =
+          tomlFormat.generate "herdr-config.toml" (typedSettings // cfg.extraConfig);
+      }
+      // lib.mapAttrs' (
+        name: file:
+          lib.nameValuePair "herdr/agent-detection/${name}" {source = file;}
+      )
+      cfg.agentDetection;
   };
 }

@@ -153,7 +153,7 @@ in {
     };
 
     extraConfig = lib.mkOption {
-      type = yamlFormat.type;
+      inherit (yamlFormat) type;
       default = {};
       example = lib.literalExpression ''{ worktree_dir = "../wt"; post_create = ["direnv allow"]; }'';
       description = "Freeform workmux config merged with the typed options (snake_case keys as workmux expects). Setting a key both ways fails evaluation.";

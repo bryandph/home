@@ -56,7 +56,7 @@
           command = cfg.commands;
         };
     }
-    // lib.optionalAttrs (cfg.terminal != {}) {terminal = cfg.terminal;};
+    // lib.optionalAttrs (cfg.terminal != {}) {inherit (cfg) terminal;};
 
   conflictingKeys = lib.intersectLists (lib.attrNames typedSettings) (lib.attrNames cfg.extraConfig);
 in {
@@ -109,7 +109,7 @@ in {
     };
 
     terminal = lib.mkOption {
-      type = tomlFormat.type;
+      inherit (tomlFormat) type;
       default = {
         default_shell = "nu";
         # tmux parity: splits/tabs open in the pane's cwd (#{pane_current_path})
@@ -126,7 +126,7 @@ in {
     };
 
     extraConfig = lib.mkOption {
-      type = tomlFormat.type;
+      inherit (tomlFormat) type;
       default = {};
       description = "Freeform herdr config merged with the typed sections. Setting a top-level key both ways fails evaluation.";
     };

@@ -138,7 +138,7 @@ in {
     };
 
     codexHooks = lib.mkOption {
-      type = jsonFormat.type;
+      inherit (jsonFormat) type;
       default =
         if cfg.enable && cfg.harnesses.codex
         then codexHooks

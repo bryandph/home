@@ -3,11 +3,11 @@
 # agentic-user-tools). Option defaults reproduce the previously
 # hand-maintained config, so enabling the module is behavior-preserving.
 #
-# One writer per file: NEVER run `herdr integration install` on managed
-# hosts — it writes into Claude Code's ~/.claude/settings.json, which must
-# stay Claude-writable (agent state comes from herdr's manifest-based
-# detection instead; overrides go in `agentDetection`). The package stays
-# consumer-supplied (flake input / overlay).
+# Herdr legitimately writes runtime state into config.toml. Nix therefore
+# renders only its desired projection and a launcher shim reconciles the
+# Nix-owned top-level keys into the writable live file before Herdr starts.
+# Immutable agent-detection overrides remain direct Home Manager files. The
+# package stays consumer-supplied (flake input / overlay).
 #
 # Default keybindings mirror shell/tmux.nix: ctrl+a prefix, vim pane focus
 # with no-prefix alt+vim/alt+arrow fallbacks, shift+arrows for tab
@@ -58,6 +58,26 @@
         };
     }
     // lib.optionalAttrs (cfg.terminal != {}) {inherit (cfg) terminal;};
+
+  desiredSettings = typedSettings // cfg.extraConfig;
+  desiredConfig = tomlFormat.generate "herdr-config-desired.toml" desiredSettings;
+  herdrPython = pkgs.python3.withPackages (pythonPackages: [pythonPackages.tomlkit]);
+  reconcileConfig = pkgs.writeShellApplication {
+    name = "herdr-config-reconcile";
+    runtimeInputs = [herdrPython];
+    text = ''
+      exec python3 ${./herdr-config-reconcile.py} "$@"
+    '';
+  };
+  wrappedPackage = pkgs.symlinkJoin {
+    name = "herdr-wrapped";
+    paths = [cfg.package];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram "$out/bin/herdr" \
+        --run '${lib.getExe reconcileConfig} ${desiredConfig} || exit $?'
+    '';
+  };
 
   conflictingKeys = lib.intersectLists (lib.attrNames typedSettings) (lib.attrNames cfg.extraConfig);
 in {
@@ -163,14 +183,9 @@ in {
       }
     ];
 
-    home.packages = [cfg.package];
+    home.packages = [wrappedPackage];
 
-    xdg.configFile =
-      {
-        "herdr/config.toml".source =
-          tomlFormat.generate "herdr-config.toml" (typedSettings // cfg.extraConfig);
-      }
-      // lib.mapAttrs' (
+    xdg.configFile = lib.mapAttrs' (
         name: file:
           lib.nameValuePair "herdr/agent-detection/${name}" {source = file;}
       )

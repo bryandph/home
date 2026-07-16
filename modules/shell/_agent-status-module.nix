@@ -9,14 +9,15 @@
 # mapping, which upstream's baseline lacks. Nested agents suppress reporting
 # via WORKMUX_DISABLE_SET_WINDOW_STATUS=1 (upstream workmux behavior).
 #
-# One writer per file: Claude Code delivery deliberately rides the plugin
+# Mutable harness configuration is reconciled by the harness launcher. Claude
+# Code delivery deliberately rides the plugin
 # mechanism (`--plugin-dir` wrapper args) and NEVER
 # `programs.claude-code.settings`/`marketplaces` — home-manager renders those
 # into a read-only store-symlinked ~/.claude/settings.json, breaking Claude
-# Code's own write-back (asserted below). Likewise ~/.codex/config.toml stays
-# unmanaged (codex writes project trust levels into it); only hooks.json is
-# ours. Never run `workmux setup` or `herdr integration install` on hosts
-# under this module.
+# Code's own write-back (asserted below). The Codex hook projection is exposed
+# as data for the parent launcher reconciler; this module does not own the
+# mutable ~/.codex/hooks.json file. Never run `workmux setup` on hosts under
+# this module.
 {
   lib,
   config,
@@ -52,24 +53,45 @@
   };
 
   # Codex hooks: upstream baseline read from the pinned source (changes flow
-  # in on pin bumps) + our waiting delta from the status model.
+  # in on pin bumps) + our waiting delta from the status model + Herdr's
+  # official pinned SessionStart lifecycle hook.
   codexBaseline = builtins.fromJSON (builtins.readFile resources.codex);
-  codexHooks =
-    codexBaseline
-    // {
-      hooks =
-        codexBaseline.hooks
-        // lib.mapAttrs (_event: state: [
+  workmuxCodexHooks =
+    codexBaseline.hooks
+    // lib.mapAttrs (_event: state: [
+      {
+        hooks = [
           {
-            hooks = [
-              {
-                type = "command";
-                command = statusModel.setStatus state;
-              }
-            ];
+            type = "command";
+            command = statusModel.setStatus state;
           }
-        ])
-        statusModel.codexDelta;
+        ];
+      }
+    ])
+    statusModel.codexDelta;
+
+  herdrCodexScriptSource =
+    if config.programs.herdr.package ? src
+    then "${config.programs.herdr.package.src}/src/integration/assets/codex/herdr-agent-state.sh"
+    else null;
+  herdrCodexScript = pkgs.runCommand "herdr-agent-state.sh" {} ''
+    cp ${herdrCodexScriptSource} "$out"
+    chmod 0555 "$out"
+  '';
+  herdrCodexScriptTarget = "${config.home.homeDirectory}/.codex/herdr-agent-state.sh";
+  herdrCodexHook = {
+    hooks = [
+      {
+        type = "command";
+        command = "bash ${lib.escapeShellArg herdrCodexScriptTarget} session";
+        timeout = 10;
+      }
+    ];
+  };
+  codexHooks =
+    workmuxCodexHooks
+    // lib.optionalAttrs config.programs.herdr.enable {
+      SessionStart = (workmuxCodexHooks.SessionStart or []) ++ [herdrCodexHook];
     };
 
   harnessOption = name: default: extraDoc:
@@ -107,13 +129,23 @@ in {
       claude = harnessOption "Claude Code" true "Delivered as a plugin (`--plugin-dir`); settings.json is never managed.";
       opencode = harnessOption "OpenCode" true "Upstream plugin file placed in the (singular) plugin/ config dir.";
       codex = harnessOption "Codex" false ''
-        Off by default: codex is not currently installed. Enabling manages
-        ~/.codex/hooks.json (upstream baseline + PermissionRequest→waiting);
-        the `[features] codex_hooks = true` flag must stay in the
-        codex-writable, unmanaged ~/.codex/config.toml (codex records project
-        trust levels there — one writer per file).
+        Off by default: codex is not currently installed. Enabling exposes the
+        upstream baseline + PermissionRequest→waiting + Herdr lifecycle hook
+        through agentic.statusHooks.codexHooks. The parent Codex launcher
+        reconciles that projection into writable hooks.json/config.toml files.
       '';
       pi = harnessOption "Pi" false "Off by default: pi is not currently set up. Enabling places workmux's extension in ~/.pi/agent/extensions/.";
+    };
+
+    codexHooks = lib.mkOption {
+      type = jsonFormat.type;
+      default =
+        if cfg.enable && cfg.harnesses.codex
+        then codexHooks
+        else {};
+      readOnly = true;
+      internal = true;
+      description = "Composed Codex event-to-hook-groups projection for the mutable-file reconciler.";
     };
   };
 
@@ -137,6 +169,20 @@ in {
             agent-status-hooks capability).
           '';
         }
+        {
+          assertion =
+            !cfg.harnesses.codex
+            || !config.programs.herdr.enable
+            || (
+              herdrCodexScriptSource != null
+              && builtins.pathExists herdrCodexScriptSource
+            );
+          message = ''
+            agentic.statusHooks: the configured Herdr package does not expose
+            its pinned Codex integration script at
+            package.src/src/integration/assets/codex/herdr-agent-state.sh.
+          '';
+        }
       ];
 
     programs.claude-code.plugins = lib.mkIf cfg.harnesses.claude [cfg.workmuxSrc];
@@ -149,8 +195,8 @@ in {
       ".pi/agent/extensions/workmux-status.ts" = lib.mkIf cfg.harnesses.pi {
         source = resources.pi;
       };
-      ".codex/hooks.json" = lib.mkIf cfg.harnesses.codex {
-        source = jsonFormat.generate "codex-workmux-hooks.json" codexHooks;
+      ".codex/herdr-agent-state.sh" = lib.mkIf (cfg.harnesses.codex && config.programs.herdr.enable) {
+        source = herdrCodexScript;
       };
     };
   };

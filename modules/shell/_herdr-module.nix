@@ -11,9 +11,10 @@
 #
 # Default keybindings mirror shell/tmux.nix: ctrl+a prefix, vim pane focus
 # with no-prefix alt+vim/alt+arrow fallbacks, shift+arrows for tab
-# switching, and lazygit/btop on prefix+g/b. Herdr defaults that already
+# switching, and temporary TUI panes on mnemonic prefix chords. Herdr defaults
+# that already
 # match tmux (new_tab c, split v/-, focus hjkl, zoom z, copy-mode [,
-# switch_tab 1..9) are left unset. To make room for the popups: goto moves
+# switch_tab 1..9) are left unset. To make room for the commands: goto moves
 # g → f and toggle_sidebar moves b → e.
 {
   lib,
@@ -97,6 +98,24 @@ in {
           type = "pane";
           command = "lazygit";
           description = "lazygit";
+        }
+        {
+          key = "prefix+shift+k";
+          type = "pane";
+          command = "k9s";
+          description = "k9s";
+        }
+        {
+          key = "prefix+shift+f";
+          type = "pane";
+          command = "lf";
+          description = "lf";
+        }
+        {
+          key = "prefix+shift+h";
+          type = "pane";
+          command = "hx";
+          description = "helix";
         }
         {
           key = "prefix+b";

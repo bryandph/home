@@ -74,6 +74,7 @@
           direnv
           nix-direnv
           lazygit
+          lf
           unixtools.arp
           tree
           pv # Pipe viewer — progress for dd/zstd pipes

@@ -185,7 +185,8 @@ in {
 
     home.packages = [wrappedPackage];
 
-    xdg.configFile = lib.mapAttrs' (
+    xdg.configFile =
+      lib.mapAttrs' (
         name: file:
           lib.nameValuePair "herdr/agent-detection/${name}" {source = file;}
       )

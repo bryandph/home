@@ -174,7 +174,8 @@ in {
             !cfg.harnesses.codex
             || !config.programs.herdr.enable
             || (
-              herdrCodexScriptSource != null
+              herdrCodexScriptSource
+              != null
               && builtins.pathExists herdrCodexScriptSource
             );
           message = ''

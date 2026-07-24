@@ -132,6 +132,12 @@
           ipcalc # subnet math — CIDR splits, ranges, masks
           xh # httpie-style HTTP client
 
+          # Binary Inspection & Forensics
+          binutils # strings, nm, objdump, readelf, size
+          file # file type identification via magic numbers
+          binwalk # firmware image analysis & extraction
+          exiftool # file metadata reader/editor
+
           # Security Tools
           nmap
           rustscan

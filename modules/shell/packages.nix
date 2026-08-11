@@ -18,10 +18,6 @@
         # zellij removed — using tmux as primary multiplexer
         jq.enable = true;
         kubecolor.enable = true;
-        zed-editor = {
-          enable = true;
-          installRemoteServer = true;
-        };
         zoxide = {
           enable = true;
           enableNushellIntegration = true;

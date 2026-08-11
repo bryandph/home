@@ -316,8 +316,6 @@
         lt = "eza -T --icons --group-directories-first --level=2";
         la = "eza -a --icons --group-directories-first";
         lg = "lazygit";
-        # override uname for zed
-        uname = "^uname";
       };
     };
   };

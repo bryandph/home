@@ -82,6 +82,7 @@
           skopeo
 
           # Other Tools
+          goose-cli
           usbutils
           yq
           sshpass

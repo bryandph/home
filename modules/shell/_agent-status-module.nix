@@ -186,7 +186,16 @@ in {
         }
       ];
 
-    programs.claude-code.plugins = lib.mkIf cfg.harnesses.claude [cfg.workmuxSrc];
+    # The plugin root is the pinned workmux source tree itself, handed over
+    # as an interpolated store-path STRING — deliberately, not the bare path
+    # value. `programs.claude-code.plugins` is a `listOf package`, and
+    # types.package coerces a path (or a context-free string) with
+    # lib.toDerivation → `builtins.storePath`, which is illegal under pure
+    # evaluation: it sinks every pure whole-fleet build (`nix run
+    # .#push-cache` enumerates host toplevels without --impure). Interpolating
+    # produces an equivalent store path carrying string context, so no
+    # coercion happens and the plugin dir stays fleet-buildable purely.
+    programs.claude-code.plugins = lib.mkIf cfg.harnesses.claude ["${cfg.workmuxSrc}"];
 
     xdg.configFile."opencode/plugin/workmux-status.ts" = lib.mkIf cfg.harnesses.opencode {
       source = resources.opencode;

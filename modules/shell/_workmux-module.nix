@@ -70,12 +70,53 @@
     };
   };
 
+  agentEnvSourceType = lib.types.submodule {
+    options.from_env = lib.mkOption {
+      type = lib.types.str;
+      description = "Environment variable to read from the workmux launch environment.";
+    };
+  };
+
+  agentProfileType = lib.types.submodule {
+    options = {
+      type = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Built-in workmux agent behavior used for prompt injection and lifecycle handling.";
+      };
+      command = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Executable or command string to launch (defaults to the agent type or profile name).";
+      };
+      args = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "Literal arguments appended after the command and before an injected prompt.";
+      };
+      env = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.either lib.types.str agentEnvSourceType);
+        default = {};
+        description = "Environment values as literals or launch-time `from_env` references.";
+      };
+    };
+  };
+
   # Drop null/false keys so the generated YAML stays as lean as the
   # hand-written one (workmux treats absent and default identically).
   cleanAttrs = lib.filterAttrs (_: v: v != null && v != false);
+  cleanAgentProfile = lib.filterAttrs (_: v: v != null && v != [] && v != {});
+  cleanAgentEntry = _: entry:
+    if builtins.isString entry
+    then entry
+    else cleanAgentProfile entry;
 
   typedSettings = lib.filterAttrs (_: v: v != null) {
     inherit (cfg) agent mode nerdfont;
+    agents =
+      if cfg.agents == {}
+      then null
+      else lib.mapAttrs cleanAgentEntry cfg.agents;
     merge_strategy = cfg.mergeStrategy;
     panes =
       if cfg.panes == null
@@ -102,6 +143,12 @@ in {
       type = lib.types.nullOr lib.types.str;
       default = "claude";
       description = "Agent command launched in `<agent>` panes.";
+    };
+
+    agents = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.either lib.types.str agentProfileType);
+      default = {};
+      description = "Global named agent profiles (string aliases or structured launch profiles).";
     };
 
     mergeStrategy = lib.mkOption {

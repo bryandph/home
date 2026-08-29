@@ -41,15 +41,16 @@
   };
 
   # Per-harness resource paths inside the pinned workmux source (layout as of
-  # v0.1.221 — dot-dirs at the repo root, not everything under resources/).
-  # The existence assertions below catch upstream path moves on pin bumps.
+  # v0.1.248 — only the Claude plugin stays at the repo root; every other
+  # harness lives under resources/<harness>/). The existence assertions below
+  # catch upstream path moves on pin bumps.
   resources = {
     # Claude plugin root is the workmux source itself: marketplace.json lists
     # plugin source "./", hooks are bundled in .claude-plugin/plugin.json.
     claude = "${cfg.workmuxSrc}/.claude-plugin/plugin.json";
     opencode = "${cfg.workmuxSrc}/resources/opencode/plugins/workmux-status.ts";
-    pi = "${cfg.workmuxSrc}/.pi/extensions/workmux-status.ts";
-    codex = "${cfg.workmuxSrc}/.codex/hooks/workmux-status.json";
+    pi = "${cfg.workmuxSrc}/resources/pi/extensions/workmux-status.ts";
+    codex = "${cfg.workmuxSrc}/resources/codex/hooks/workmux-status.json";
   };
 
   # Codex hooks: upstream baseline read from the pinned source (changes flow

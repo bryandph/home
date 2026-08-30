@@ -1,4 +1,14 @@
 {
+  flake.modules.homeManager.ghostty-terminfo = {
+    lib,
+    pkgs,
+    ...
+  }: {
+    home.packages = lib.optionals pkgs.stdenv.isLinux [
+      pkgs.ghostty.terminfo
+    ];
+  };
+
   flake.modules.homeManager.ghostty = {
     lib,
     pkgs,

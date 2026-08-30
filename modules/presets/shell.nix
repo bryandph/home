@@ -10,6 +10,7 @@
       agent-status-sounds
       git
       gpg
+      ghostty-terminfo
       helix
       herdr
       k9s

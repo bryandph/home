@@ -1,11 +1,15 @@
-{
+{getSystem, ...}: {
+  perSystem = {pkgs, ...}: {
+    packages.ghostty-terminfo = pkgs.callPackage ./_ghostty-terminfo.nix {};
+  };
+
   flake.modules.homeManager.ghostty-terminfo = {
     lib,
     pkgs,
     ...
   }: {
     home.packages = lib.optionals pkgs.stdenv.isLinux [
-      pkgs.ghostty.terminfo
+      (getSystem pkgs.stdenv.buildPlatform.system).packages.ghostty-terminfo
     ];
   };
 

@@ -18,11 +18,13 @@
               homeDirectory = "/home/sound-fixture";
               stateVersion = "26.05";
             };
-            programs.claude-code.enable = true;
-            programs.workmux.package = pkgs.emptyDirectory // {src = ./_tests/workmux;};
-            programs.herdr = {
-              enable = true;
-              package = pkgs.emptyDirectory // {src = inputs.herdr.outPath;};
+            programs = {
+              claude-code.enable = true;
+              workmux.package = pkgs.emptyDirectory // {src = ./_tests/workmux;};
+              herdr = {
+                enable = true;
+                package = pkgs.emptyDirectory // {src = inputs.herdr.outPath;};
+              };
             };
             agentic.statusHooks = {
               enable = true;

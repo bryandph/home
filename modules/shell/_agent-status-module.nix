@@ -5,9 +5,9 @@
 # `workmux set-window-status`), delivered per harness from the pinned workmux
 # source's own integration resources — the same artifacts `workmux setup`
 # would install, minus the imperative installer. We carry no forked hook or
-# plugin logic; the only local delta is Codex's PermissionRequest → waiting
-# mapping, which upstream's baseline lacks. Nested agents suppress reporting
-# via WORKMUX_DISABLE_SET_WINDOW_STATUS=1 (upstream workmux behavior).
+# plugin logic. Local side channels add Codex's PermissionRequest → waiting
+# mapping and bridge Pi UI prompts to workmux/Herdr waiting events.
+# Nested agents suppress reporting via WORKMUX_DISABLE_SET_WINDOW_STATUS=1 (upstream workmux behavior).
 #
 # Mutable harness configuration is reconciled by the harness launcher. Claude
 # Code delivery deliberately rides the plugin
@@ -80,6 +80,13 @@
     chmod 0555 "$out"
   '';
   herdrCodexScriptTarget = "${config.home.homeDirectory}/.codex/herdr-agent-state.sh";
+  herdrPiSource =
+    if config.programs.herdr.package ? src
+    then "${config.programs.herdr.package.src}/src/integration/assets/pi/herdr-agent-state.ts"
+    else null;
+  piPromptBridge = pkgs.writeText "pi-status-prompts.ts" (lib.replaceStrings
+    ["@herdr@"] [(builtins.toJSON config.programs.herdr.enable)]
+    (builtins.readFile ./pi-status-prompts.ts));
   herdrCodexHook = {
     hooks = [
       {
@@ -135,7 +142,7 @@ in {
         through agentic.statusHooks.codexHooks. The parent Codex launcher
         reconciles that projection into writable hooks.json/config.toml files.
       '';
-      pi = harnessOption "Pi" false "Off by default: pi is not currently set up. Enabling places workmux's extension in ~/.pi/agent/extensions/.";
+      pi = harnessOption "Pi" false "Places pinned workmux and (when enabled) Herdr extensions beside each other in ~/.pi/agent/extensions/. Settings remain tool-owned.";
     };
 
     codexHooks = lib.mkOption {
@@ -154,6 +161,10 @@ in {
     assertions =
       map resourceAssertion (lib.attrNames resources)
       ++ [
+        {
+          assertion = !cfg.harnesses.pi || !config.programs.herdr.enable || (herdrPiSource != null && builtins.pathExists herdrPiSource);
+          message = "agentic.statusHooks: Herdr package.src must expose src/integration/assets/pi/herdr-agent-state.ts.";
+        }
         {
           assertion = cfg.harnesses.claude -> config.programs.claude-code.enable;
           message = "agentic.statusHooks.harnesses.claude requires programs.claude-code.enable (the plugin rides its wrapper).";
@@ -205,6 +216,12 @@ in {
     home.file = {
       ".pi/agent/extensions/workmux-status.ts" = lib.mkIf cfg.harnesses.pi {
         source = resources.pi;
+      };
+      ".pi/agent/extensions/status-prompts.ts" = lib.mkIf cfg.harnesses.pi {
+        source = piPromptBridge;
+      };
+      ".pi/agent/extensions/herdr-agent-state.ts" = lib.mkIf (cfg.harnesses.pi && config.programs.herdr.enable) {
+        source = herdrPiSource;
       };
       ".codex/herdr-agent-state.sh" = lib.mkIf (cfg.harnesses.codex && config.programs.herdr.enable) {
         source = herdrCodexScript;

@@ -70,7 +70,7 @@
 in {
   flake = {
     homeModules = {
-      inherit (hm) bryan bryan-with-de bryan-darwin;
+      inherit (hm) bryan bryan-with-de bryan-with-i3 bryan-darwin desktop-i3 de-i3 de-hyprland;
     };
 
     # Legacy export name kept for external compat — these are Home Manager
@@ -78,12 +78,12 @@ in {
     # homeModules or flakeModules.default instead.
     nixos-modules = {
       bryan-shell = hm.shell;
-      bryan-de = hm.de;
+      bryan-de = hm.de-hyprland;
     };
 
     flakeModules.default = {
       flake.modules.homeManager = {
-        inherit (hm) bryan bryan-with-de bryan-darwin;
+        inherit (hm) bryan bryan-with-de bryan-with-i3 bryan-darwin desktop-i3 de-i3 de-hyprland;
       };
     };
 

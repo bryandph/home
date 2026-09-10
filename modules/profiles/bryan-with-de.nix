@@ -4,7 +4,7 @@
   flake.modules.homeManager.bryan-with-de = {
     imports = with config.flake.modules.homeManager; [
       bryan
-      de
+      de-hyprland
     ];
   };
 }

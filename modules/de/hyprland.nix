@@ -1,5 +1,6 @@
 {
   flake.modules.homeManager.hyprland = {
+    config,
     pkgs,
     lib,
     ...
@@ -12,22 +13,64 @@
     # multi-arg call, and `mkLuaInline` emits raw Lua. See
     # https://wiki.hypr.land/Configuring/Start/ and ../../../ issue home#1.
 
-    # `hl.bind(mod .. " + <combo>", <dispatch>)` — combo is appended to the
-    # `mod` Lua local; dispatch is raw Lua.
-    bind = combo: dispatch: {
-      _args = [
-        (mkLuaInline ''mod .. " + ${combo}"'')
-        (mkLuaInline dispatch)
-      ];
-    };
-
-    focus = dir: ''hl.dsp.focus({ direction = "${dir}" })'';
-
-    # movewindow has no confirmed native hl.dsp.* on 0.55, so dispatch via
-    # hyprctl to preserve the exact prior behavior without risking a
-    # nil-function error that would break the whole config load.
-    moveWindow = dir: ''hl.dsp.exec_cmd("hyprctl dispatch movewindow ${dir}")'';
+    # rofi's X11 window mode cannot enumerate native Wayland clients.
+    # Keep the shared switcher binding and rofi UI, selecting via Hyprland IPC.
+    windowSwitcher = pkgs.writeShellScript "hyprland-window-switcher" ''
+      clients="$(${pkgs.hyprland}/bin/hyprctl clients -j)"
+      selection="$(printf '%s' "$clients" | ${pkgs.jq}/bin/jq -r '.[] | "[\(.workspace.name)] \(.class): \(.title | gsub("[\\n\\r]"; " "))"' | ${config.programs.rofi.package}/bin/rofi -config ${config.home.file.${config.programs.rofi.configPath}.source} -dmenu -i -format i -p Windows)" || exit 0
+      case "$selection" in ""|*[!0-9]*) exit 0 ;; esac
+      address="$(printf '%s' "$clients" | ${pkgs.jq}/bin/jq -r --argjson index "$selection" '.[$index].address // empty')"
+      if [ -n "$address" ]; then
+        ${pkgs.hyprland}/bin/hyprctl dispatch focuswindow "address:$address"
+      fi
+    '';
+    keymap = config.de.keymap;
+    combo = b:
+      lib.concatStringsSep " + " ((map (m:
+          if m == "mod"
+          then keymap.mod
+          else lib.toUpper m)
+        b.modifiers)
+        ++ [b.key]);
+    exec = command: "hl.dsp.exec_cmd(${builtins.toJSON command})";
+    dispatch = command: exec "hyprctl dispatch ${command}";
+    render = b:
+      {
+        exec = exec keymap.commands.${b.argument};
+        close = "hl.dsp.window.close()";
+        fullscreen = dispatch "fullscreen 0";
+        float = ''hl.dsp.window.float({ action = "toggle" })'';
+        focus = ''hl.dsp.focus({ direction = "${b.argument}" })'';
+        move = dispatch "movewindow ${{
+            left = "l";
+            right = "r";
+            up = "u";
+            down = "d";
+          }.${
+            b.argument
+          }}";
+        workspace = dispatch "workspace ${b.argument}";
+        move-workspace = dispatch "movetoworkspacesilent ${b.argument}";
+        resize-mode = ''hl.dsp.submap("resize")'';
+        resize = dispatch "resizeactive ${{
+            left = "-10 0";
+            right = "10 0";
+            up = "0 -10";
+            down = "0 10";
+          }.${
+            b.argument
+          }}";
+        default-mode = ''hl.dsp.submap("reset")'';
+        split = ''hl.dsp.layout("togglesplit")'';
+        lock = exec keymap.commands.lock;
+        exit = dispatch "exit";
+      }.${
+        b.action
+      };
+    bind = b: {_args = [(combo b) (mkLuaInline (render b))];};
   in {
+    de.keymap.commands.lock = lib.mkDefault "hyprlock";
+    de.keymap.commands.switcher = lib.mkDefault (toString windowSwitcher);
     services.hyprpaper.enable = true;
 
     services.hypridle = {
@@ -36,12 +79,12 @@
         general = {
           after_sleep_cmd = "hyprctl dispatch dpms on";
           ignore_dbus_inhibit = false;
-          lock_cmd = "hyprlock";
+          lock_cmd = keymap.commands.lock;
         };
         listener = [
           {
             timeout = 900;
-            on-timeout = "hyprlock";
+            on-timeout = keymap.commands.lock;
           }
           {
             timeout = 1200;
@@ -58,7 +101,6 @@
       hyprlock.enable = true;
     };
     home.packages = with pkgs; [
-      waybar
       waypipe
     ];
     wayland.windowManager.hyprland = {
@@ -67,8 +109,8 @@
       # Hyprland 0.55+ uses Lua; hyprlang is deprecated. (home#1)
       configType = "lua";
       settings = {
-        # local mod = "ALT"
-        mod._var = "ALT";
+        # Shared primary modifier
+        mod._var = keymap.mod;
 
         # hl.config({ ... })
         config = {
@@ -155,31 +197,10 @@
           (mkLuaInline ''function() hl.exec_cmd("waybar") end'')
         ];
 
-        # hl.bind(...) per element
-        bind = [
-          (bind "Return" ''hl.dsp.exec_cmd("kitty")'')
-          (bind "q" "hl.dsp.window.close()")
-          (bind "M" ''hl.dsp.exec_cmd("hyprctl dispatch exit")'')
-          (bind "E" ''hl.dsp.exec_cmd("dolphin")'')
-          (bind "V" ''hl.dsp.window.float({ action = "toggle" })'')
-          (bind "F" ''hl.dsp.exec_cmd("wofi --show drun")'')
-          (bind "P" "hl.dsp.window.pseudo()")
-          (bind "J" ''hl.dsp.layout("togglesplit")'')
-
-          (bind "left" (focus "left"))
-          (bind "right" (focus "right"))
-          (bind "up" (focus "up"))
-          (bind "down" (focus "down"))
-
-          (bind "SHIFT + H" (moveWindow "l"))
-          (bind "SHIFT + L" (moveWindow "r"))
-          (bind "SHIFT + K" (moveWindow "u"))
-          (bind "SHIFT + J" (moveWindow "d"))
-
-          (bind "SHIFT + left" (moveWindow "l"))
-          (bind "SHIFT + right" (moveWindow "r"))
-          (bind "SHIFT + up" (moveWindow "u"))
-          (bind "SHIFT + down" (moveWindow "d"))
+        bind = map bind keymap.bindings;
+        define_submap._args = [
+          "resize"
+          (mkLuaInline ("function()\n" + lib.concatMapStringsSep "\n" (b: "hl.bind(${builtins.toJSON (combo b)}, ${render b})") keymap.resizeBindings + "\nend"))
         ];
       };
     };

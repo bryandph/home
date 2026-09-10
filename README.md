@@ -26,9 +26,9 @@ home/
     ├── shell/                 # Feature modules: git, gpg, helix, k9s,
     │                          #   nix-tools, nushell, sesh, starship, tmux,
     │                          #   workmux, ghostty, packages
-    ├── de/                    # Feature modules: hyprland, kitty, chromium, wofi
-    ├── presets/               # Bundles: shell, de (pure imports, no gates)
-    ├── profiles/              # Coarse exports: bryan, bryan-with-de, bryan-darwin
+    ├── de/                    # Feature modules: hyprland, i3, shared keymap, rofi, bars
+    ├── presets/               # Bundles: shell, de-hyprland, de-i3, desktop-i3
+    ├── profiles/              # Coarse exports: bryan, bryan-with-de, bryan-with-i3, bryan-darwin
     └── configurations/        # Standalone homeConfigurations: bryan, bryan-darwin
 ```
 
@@ -49,7 +49,10 @@ but the `lib` shims still translate it for old call sites).
 Tier-1 (classic, stable contract):
 
 - **`homeModules.bryan`** — base Linux home (shell tools only)
-- **`homeModules.bryan-with-de`** — bryan + desktop environment
+- **`homeModules.bryan-with-de`** — bryan + Hyprland (stable export)
+- **`homeModules.bryan-with-i3`** — bryan + i3
+- **`homeModules.desktop-i3`** — reusable i3 session without operator identity, browser or idle policy
+- **`homeModules.{de-hyprland,de-i3}`** — desktop presets without the shell profile
 - **`homeModules.bryan-darwin`** — macOS home
 - **`nixos-modules.{bryan-shell, bryan-de}`** — legacy aliases for the shell/de
   bundles (they are HM modules; prefer homeModules)
@@ -66,8 +69,35 @@ Tier-2 (dendritic consumers):
 The home modules are included via `home-manager.sharedModules` in nixspace
 NixOS configurations:
 
-- Systems with `withDE = false` (wsl, servers, most SBCs) use the `bryan` module
-- Systems with `withDE = true` (panda, dell, uconsole) use the `bryan-with-de` module
+- Systems with `de = null` (wsl, servers, most SBCs) use the `bryan` module
+- Systems with `de = "hyprland"` (panda, dell, uconsole) use the `bryan-with-de` module
+
+The parent `desktops` registry pairs system and home modules. Set
+`configurations.nixos.<host>.de = "i3"` or `"hyprland"`; no additional
+session bundle imports are required. Blackbox composes `desktop-i3` separately
+with its appliance account and always-on policy.
+
+### Shared desktop bindings
+
+The modifier is **SUPER** (changed from ALT). Both sessions use:
+
+| Binding | Action |
+| --- | --- |
+| SUPER+Return / d / e / Tab | Terminal / applications / files / windows |
+| SUPER+q / f | Close / fullscreen |
+| SUPER+arrows or h/j/k/l | Focus in a direction |
+| SUPER+Shift+arrows or h/j/k/l | Move in a direction |
+| SUPER+1–9 / SUPER+Shift+1–9 | Switch workspace / move window |
+| SUPER+space / SUPER+Shift+space | Toggle split layout / floating |
+| SUPER+r, then arrows, Escape or Return | Resize, then leave resize mode |
+| SUPER+Shift+x / SUPER+Shift+e | Lock / exit session |
+
+Override `de.keymap.mod`, `de.keymap.commands.<name>`, `de.keymap.bindings`
+or `de.keymap.resizeBindings` through normal Home Manager options. The same
+semantic list drives both renderers. Rofi provides the UI on both sessions;
+the Hyprland window picker enumerates native Wayland clients through IPC.
+The Hyprland preset still expects the consumer's hyprshell Home Manager module,
+as before; nixspace supplies it in the system bundle.
 
 ## Usage in Darwin
 

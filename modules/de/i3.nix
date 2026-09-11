@@ -5,6 +5,10 @@
     pkgs,
     ...
   }: let
+    python = pkgs.python3.withPackages (ps: [ps.i3ipc]);
+    singleWindow = pkgs.writeShellScript "i3-single-window" ''
+      exec ${python}/bin/python3 ${./_scripts/i3-single-window.py}
+    '';
     keymap = config.de.keymap;
     mod =
       {
@@ -68,7 +72,14 @@
         keybindings = bindings keymap.bindings;
         modes.resize = bindings keymap.resizeBindings;
         bars = [];
+        startup = [
+          {
+            command = toString singleWindow;
+            notification = false;
+          }
+        ];
         gaps = {
+          smartGaps = true;
           inner = 5;
           outer = 20;
         };

@@ -99,6 +99,12 @@ the Hyprland window picker enumerates native Wayland clients through IPC.
 The Hyprland preset still expects the consumer's hyprshell Home Manager module,
 as before; nixspace supplies it in the system bundle.
 
+On i3, a lone tiled window has no window-manager title bar or gaps. Opening
+another tiled window restores normal title bars; floating overlays do not count.
+Browser tabs and navigation remain visible. Polybar overlays the primary output
+without reserving space: move the pointer to its top edge to reveal it, and move
+away to hide it after 600ms. Its workspace, audio and tray controls remain usable.
+
 ## Usage in Darwin
 
 Darwin systems use the `bryan-darwin` module which is optimized for macOS.

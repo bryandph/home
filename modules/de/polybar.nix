@@ -12,33 +12,11 @@
         base05 = "eeeeee";
       };
     font = config.stylix.fonts.monospace.name or "monospace";
+    python = pkgs.python3.withPackages (ps: [ps.xlib]);
     launcher = pkgs.writeShellScript "desktop-polybar" ''
-      child=""
-      monitor=""
-      cleanup() {
-        if [ -n "$child" ]; then
-          kill "$child" 2>/dev/null || true
-          wait "$child" 2>/dev/null || true
-        fi
-      }
-      trap cleanup EXIT
-      trap 'exit 0' INT TERM HUP
-      while outputs="$(${pkgs.xrandr}/bin/xrandr --query 2>/dev/null)"; do
-        primary="$(printf '%s\n' "$outputs" | ${pkgs.gawk}/bin/awk '$2 == "connected" && $3 == "primary" { print $1; exit }')"
-        if [ -z "$primary" ]; then
-          primary="$(printf '%s\n' "$outputs" | ${pkgs.gawk}/bin/awk '$2 == "connected" { print $1; exit }')"
-        fi
-        if [ "$primary" != "$monitor" ] || [ -z "$child" ] || ! kill -0 "$child" 2>/dev/null; then
-          cleanup
-          child=""
-          monitor="$primary"
-          if [ -n "$monitor" ]; then
-            MONITOR="$monitor" ${pkgs.polybar}/bin/polybar -c ${config.xdg.configFile."polybar/config.ini".source} desktop &
-            child=$!
-          fi
-        fi
-        ${pkgs.coreutils}/bin/sleep 2
-      done
+      exec ${python}/bin/python3 ${./_scripts/polybar-edge.py} \
+        ${config.xdg.configFile."polybar/config.ini".source} \
+        ${pkgs.polybar}/bin/polybar ${pkgs.polybar}/bin/polybar-msg ${pkgs.xrandr}/bin/xrandr
     '';
   in {
     # Render config without a second systemd-owned bar competing with i3 startup.
@@ -61,7 +39,8 @@
         "modules-left" = "workspaces";
         "modules-center" = "clock";
         "modules-right" = "audio tray";
-        "wm-restack" = "i3";
+        "enable-ipc" = true;
+        "override-redirect" = true;
       };
       "module/workspaces" = {
         type = "internal/i3";

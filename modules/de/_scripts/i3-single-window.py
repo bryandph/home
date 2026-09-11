@@ -27,9 +27,12 @@ def update(connection, _event=None):
         style, width = ("none", 0) if len(windows) == 1 else ("normal", 2)
         for window in windows:
             if window.border != style or window.current_border_width != width:
-                commands.append(f"[con_id={window.id}] border {style} {width}")
+                command = "border none" if style == "none" else f"border normal {width}"
+                commands.append(f"[con_id={window.id}] {command}")
     if commands:
-        connection.command("; ".join(commands))
+        replies = connection.command("; ".join(commands))
+        if not all(reply.success for reply in replies):
+            raise RuntimeError("i3 rejected a decoration command")
 
 
 connection = i3ipc.Connection(auto_reconnect=True)

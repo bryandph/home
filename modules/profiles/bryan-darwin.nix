@@ -8,6 +8,7 @@
       meta
       shell
       ghostty
+      colima
     ];
 
     home = {

@@ -18,16 +18,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1790233611,
-        "narHash": "sha256-rmxXxL+oTF1beXYdYGl2zzlVHu2FSo/BaxwCBBdvsDE=",
+        "lastModified": 1790235246,
+        "narHash": "sha256-aKS59aDFnfbrPhft0XMiLoFuZLsXV5mxoetZeielNW0=",
         "ref": "refs/heads/main",
-        "rev": "8a866de80b260c62bdc8bcc6402f3ca4e2c483ff",
-        "revCount": 42,
+        "rev": "82644af2a73194915dda4cad81ea88439d4c015e",
+        "revCount": 43,
         "type": "git",
         "url": "ssh://git@git.bph/bryan/agentic"
       },
       "original": {
-        "rev": "8a866de80b260c62bdc8bcc6402f3ca4e2c483ff",
+        "rev": "82644af2a73194915dda4cad81ea88439d4c015e",
         "type": "git",
         "url": "ssh://git@git.bph/bryan/agentic"
       }
@@ -313,17 +313,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1790233463,
-        "narHash": "sha256-Jy+PIVUrEreKDAe2U7kSCGiEFW9dVXTNTgVynaST36w=",
+        "lastModified": 1790235122,
+        "narHash": "sha256-gF7cODECa8zJdVmtJL2nx+cE0sYtfat//IzvkS9AIHQ=",
         "owner": "bryandph",
         "repo": "mcp-servers-nix",
-        "rev": "b72c30cf9e32f6f36440c8dc557f94757b916c25",
+        "rev": "9afe07a9b4a33bedaaafad0a39b17948a5449b7b",
         "type": "github"
       },
       "original": {
         "owner": "bryandph",
         "repo": "mcp-servers-nix",
-        "rev": "b72c30cf9e32f6f36440c8dc557f94757b916c25",
+        "rev": "9afe07a9b4a33bedaaafad0a39b17948a5449b7b",
         "type": "github"
       }
     },

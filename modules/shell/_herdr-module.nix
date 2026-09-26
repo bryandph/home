@@ -150,7 +150,9 @@ in {
     terminal = lib.mkOption {
       inherit (tomlFormat) type;
       default = {
-        default_shell = "nu";
+        # Herdr resolves bare login-shell names against the detached server's
+        # inherited PATH, which may omit the per-user Nix profile on macOS.
+        default_shell = lib.getExe pkgs.nushell;
         # tmux parity: splits/tabs open in the pane's cwd (#{pane_current_path})
         new_cwd = "follow";
       };

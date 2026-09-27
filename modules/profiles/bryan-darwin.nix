@@ -2,8 +2,12 @@
 # Unlike the Linux profile this one DOES set home.username/homeDirectory
 # (from the HM-level meta options) — parity with the pre-dendritic
 # bryan/darwin.nix, whose values came from the `globals` specialArg.
-{config, ...}: {
-  flake.modules.homeManager.bryan-darwin = hmArgs: {
+{
+  config,
+  inputs,
+  ...
+}: {
+  flake.modules.homeManager.bryan-darwin = hmArgs @ {pkgs, ...}: {
     imports = with config.flake.modules.homeManager; [
       meta
       shell
@@ -18,5 +22,10 @@
     };
 
     programs.home-manager.enable = true;
+
+    programs.herdr = {
+      enable = true;
+      package = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    };
   };
 }

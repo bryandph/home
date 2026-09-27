@@ -3,14 +3,27 @@
 # parent's NixOS HM eval those come from the home-manager NixOS module; the
 # standalone configuration (modules/configurations/bryan.nix) sets them
 # itself.
-{config, ...}: {
-  flake.modules.homeManager.bryan = {lib, ...}: {
+{
+  config,
+  inputs,
+  ...
+}: {
+  flake.modules.homeManager.bryan = {
+    lib,
+    pkgs,
+    ...
+  }: {
     imports = with config.flake.modules.homeManager; [
       meta
       shell
     ];
 
     home.stateVersion = "26.05";
+
+    programs.herdr = {
+      enable = true;
+      package = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    };
 
     services.ssh-agent.enable = lib.mkDefault true;
   };

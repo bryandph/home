@@ -2,7 +2,8 @@
 # Composes the bryan profile + stylix theming, and supplies what standalone
 # activation needs beyond the profile: home.username/homeDirectory (set by
 # the home-manager NixOS module when composed by the parent) and the workmux
-# package from this flake's input (set per-host by the parent).
+# package from this flake's input (set per-host by the parent). Herdr belongs
+# to the reusable Bryan profile so every consumer receives it consistently.
 {
   config,
   inputs,
@@ -24,11 +25,6 @@
       programs.workmux = {
         enable = true;
         package = inputs.workmux.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      };
-
-      programs.herdr = {
-        enable = true;
-        package = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
     };
   };

@@ -50,6 +50,12 @@
             b.argument
           }}";
         workspace = dispatch "workspace ${b.argument}";
+        workspace-cycle = dispatch "workspace ${{
+            previous = "m-1";
+            next = "m+1";
+          }.${
+            b.argument
+          }}";
         move-workspace = dispatch "movetoworkspacesilent ${b.argument}";
         resize-mode = ''hl.dsp.submap("resize")'';
         resize = dispatch "resizeactive ${{

@@ -15,11 +15,18 @@
       Down = "j";
     };
     directional = lib.concatMap (direction:
-      lib.concatMap (key: [
-        (binding key ["mod"] "focus" (lib.toLower direction))
-        (binding key ["mod" "Shift"] "move" (lib.toLower direction))
-      ]) [direction viKeys.${direction}])
+      [
+        (binding viKeys.${direction} ["mod"] "focus" (lib.toLower direction))
+        (binding viKeys.${direction} ["mod" "Shift"] "move" (lib.toLower direction))
+        (binding direction ["mod" "Shift"] "move" (lib.toLower direction))
+      ]
+      ++ lib.optional (lib.elem direction ["Up" "Down"])
+      (binding direction ["mod"] "focus" (lib.toLower direction)))
     directions;
+    workspaceCycle = [
+      (binding "Left" ["mod"] "workspace-cycle" "previous")
+      (binding "Right" ["mod"] "workspace-cycle" "next")
+    ];
     workspaces = lib.concatMap (n: [
       (binding (toString n) ["mod"] "workspace" (toString n))
       (binding (toString n) ["mod" "Shift"] "move-workspace" (toString n))
@@ -36,7 +43,7 @@
           description = "Modifiers; mod resolves through de.keymap.mod.";
         };
         action = mkOption {
-          type = types.enum ["exec" "close" "fullscreen" "float" "focus" "move" "workspace" "move-workspace" "resize-mode" "resize" "default-mode" "split" "lock" "exit"];
+          type = types.enum ["exec" "close" "fullscreen" "float" "focus" "move" "workspace" "workspace-cycle" "move-workspace" "resize-mode" "resize" "default-mode" "split" "lock" "exit"];
           description = "Window-manager-independent action.";
         };
         argument = mkOption {
@@ -74,7 +81,7 @@
             (binding "x" ["mod" "Shift"] "lock" "")
             (binding "e" ["mod" "Shift"] "exit" "")
           ]
-          ++ directional ++ workspaces;
+          ++ directional ++ workspaceCycle ++ workspaces;
         description = "Bindings shared by all desktop sessions.";
       };
       resizeBindings = mkOption {

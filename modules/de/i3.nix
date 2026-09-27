@@ -36,6 +36,12 @@
         focus = "focus ${b.argument}";
         move = "move ${b.argument}";
         workspace = "workspace number ${b.argument}";
+        workspace-cycle = "workspace ${{
+            previous = "prev_on_output";
+            next = "next_on_output";
+          }.${
+            b.argument
+          }}";
         move-workspace = "move container to workspace number ${b.argument}";
         resize-mode = "mode resize";
         resize =

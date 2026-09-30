@@ -36,25 +36,70 @@
     # 2. `colima start` on an already-running instance logs "already
     #    running" and exits 0 immediately, so launchd supervises nothing
     #    (seen on every darwin-rebuild that replaces the agent).
+    # 3. A start racing the previous agent's shutdown can log "done" and
+    #    stay in the foreground with the VM stopped (2026-09-26, after a
+    #    switch): the process never exits, so launchd never retries.
+    #    Colima sat down for four days.
     #
     # Upstream home-manager's KeepAlive.SuccessfulExit = true fixes
-    # neither, hence the wrapper: stop whatever is up so the foreground
-    # start always owns the VM, and force-stop after a failed start so
-    # the KeepAlive retry begins from a clean instance. No `exec`: the
-    # wrapper must outlive the start to do that cleanup.
+    # none of these, hence the wrapper: stop whatever is up so the
+    # foreground start always owns the VM, give it a startup deadline,
+    # then watch `colima status` while it runs. A failed start, a missed
+    # deadline, or a VM that stays down force-stops the instance and
+    # exits 1 so the KeepAlive retry begins from a clean instance. No
+    # `exec`: the wrapper must outlive the start to do that cleanup.
+    timeout = "${pkgs.coreutils}/bin/timeout";
     startColima = pkgs.writeShellScript "colima-start-supervised" ''
-      if ${colima} status default >/dev/null 2>&1; then
+      startupDeadline=600  # first boot provisions the image; be generous
+      checkInterval=60
+      maxMisses=3          # ~3 min of a down VM before restarting
+
+      healthy() { ${timeout} 30 ${colima} status default >/dev/null 2>&1; }
+
+      fail() {
+        echo "colima: $1; forcing a stop so the retry is not wedged"
+        kill -TERM "$pid" 2>/dev/null && wait "$pid"
+        ${colima} stop default --force || true
+        exit 1
+      }
+
+      if healthy; then
         echo "colima: a VM is up that this agent does not own; restarting it"
         ${colima} stop default || ${colima} stop default --force || true
       fi
 
-      if ${colima} start default -f --activate=true --save-config=false; then
-        exit 0
-      fi
+      ${colima} start default -f --activate=true --save-config=false &
+      pid=$!
 
-      echo "colima: start failed; forcing a stop so the retry is not wedged"
-      ${colima} stop default --force || true
-      exit 1
+      # launchd stopping the agent (bootout, switch) is a clean stop:
+      # hand the signal to colima so it shuts the VM down, then exit 0.
+      trap 'kill -TERM "$pid" 2>/dev/null; wait "$pid"; exit 0' TERM INT
+
+      # Any exit of the foreground start is final: 0 is a clean stop,
+      # anything else a failed start.
+      exited() {
+        kill -0 "$pid" 2>/dev/null && return 1
+        wait "$pid" && exit 0
+        fail "start exited with status $?"
+      }
+
+      deadline=$((SECONDS + startupDeadline))
+      until healthy; do
+        exited || true
+        ((SECONDS < deadline)) || fail "not running after ''${startupDeadline}s"
+        sleep 5 & wait $!
+      done
+
+      misses=0
+      while :; do
+        sleep "$checkInterval" & wait $!
+        exited || true
+        if healthy; then
+          misses=0
+        elif ((++misses >= maxMisses)); then
+          fail "VM down for $misses checks while the start is still in the foreground"
+        fi
+      done
     '';
   in {
     # The docker CLI itself comes from the darwin system profile

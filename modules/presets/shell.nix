@@ -14,6 +14,7 @@
       helix
       herdr
       k9s
+      kubernetes-oidc
       neovim
       nix-tools
       nushell

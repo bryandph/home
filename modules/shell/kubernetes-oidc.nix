@@ -74,7 +74,7 @@
   in {
     home = {
       packages = [pkgs.kubelogin-oidc];
-      file.".kube/k8s-bph-oidc.yaml".text = builtins.toJSON kubeconfig;
+      file.".kube/k8s-bph-oidc.yaml".source = (pkgs.formats.yaml {}).generate "k8s-bph-oidc.yaml" kubeconfig;
     };
   };
 }

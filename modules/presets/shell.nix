@@ -18,6 +18,7 @@
       neovim
       nix-tools
       nushell
+      pi
       sesh
       shell-packages
       starship

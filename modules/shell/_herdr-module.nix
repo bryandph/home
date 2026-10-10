@@ -95,10 +95,11 @@ in {
         prefix = "ctrl+a";
         # tmux detaches on prefix+d; keep herdr's prefix+q too
         detach = ["prefix+d" "prefix+q"];
-        # no-prefix pane focus (tmux: bind -n M-h/j/k/l + M-arrows)
+        # no-prefix pane focus (tmux: bind -n M-h/j/k/l + M-arrows); alt+up/down
+        # stay with Pi (message dequeue, model reorder — shell/pi.nix)
         focus_pane_left = ["prefix+h" "alt+h" "alt+left"];
-        focus_pane_down = ["prefix+j" "alt+j" "alt+down"];
-        focus_pane_up = ["prefix+k" "alt+k" "alt+up"];
+        focus_pane_down = ["prefix+j" "alt+j"];
+        focus_pane_up = ["prefix+k" "alt+k"];
         focus_pane_right = ["prefix+l" "alt+l" "alt+right"];
         # no-prefix tab switching (tmux: bind -n S-Left/S-Right)
         previous_tab = ["prefix+p" "shift+left"];

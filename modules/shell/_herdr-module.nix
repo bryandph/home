@@ -69,13 +69,19 @@
       exec python3 ${./herdr-config-reconcile.py} "$@"
     '';
   };
+  sshShim = import ./_herdr-ssh-shim.nix {
+    inherit lib pkgs;
+    hosts = cfg.sshNoCompressionHosts;
+  };
+  wrapArgs =
+    lib.optionals (cfg.sshNoCompressionHosts != []) ["--prefix" "PATH" ":" "${sshShim}/bin"]
+    ++ ["--run" "${lib.getExe reconcileConfig} ${desiredConfig} || exit $?"];
   wrappedPackage = pkgs.symlinkJoin {
     name = "herdr-wrapped";
     paths = [cfg.package];
     nativeBuildInputs = [pkgs.makeWrapper];
     postBuild = ''
-      wrapProgram "$out/bin/herdr" \
-        --run '${lib.getExe reconcileConfig} ${desiredConfig} || exit $?'
+      wrapProgram "$out/bin/herdr" ${lib.escapeShellArgs wrapArgs}
     '';
   };
 
@@ -165,6 +171,17 @@ in {
       default = {};
       example = lib.literalExpression ''{ "claude.toml" = ./herdr/claude-detection.toml; }'';
       description = "Agent-detection manifest overrides installed under ~/.config/herdr/agent-detection/.";
+    };
+
+    sshNoCompressionHosts = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      example = ["openshell-*"];
+      description = ''
+        SSH destination globs for which herdr's ssh/scp calls must not request
+        compression. Herdr always passes `-C`; a shim first on herdr's PATH
+        removes it for matching hosts only (the PATH also reaches herdr's panes).
+      '';
     };
 
     extraConfig = lib.mkOption {

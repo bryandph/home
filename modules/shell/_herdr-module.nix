@@ -71,10 +71,11 @@
   };
   sshShim = import ./_herdr-ssh-shim.nix {
     inherit lib pkgs;
-    hosts = cfg.sshNoCompressionHosts;
+    noCompressionHosts = cfg.sshNoCompressionHosts;
+    posixHosts = cfg.sshPosixHosts;
   };
   wrapArgs =
-    lib.optionals (cfg.sshNoCompressionHosts != []) ["--prefix" "PATH" ":" "${sshShim}/bin"]
+    lib.optionals (cfg.sshNoCompressionHosts ++ cfg.sshPosixHosts != []) ["--prefix" "PATH" ":" "${sshShim}/bin"]
     ++ ["--run" "${lib.getExe reconcileConfig} ${desiredConfig} || exit $?"];
   wrappedPackage = pkgs.symlinkJoin {
     name = "herdr-wrapped";
@@ -181,6 +182,17 @@ in {
         SSH destination globs for which herdr's ssh/scp calls must not request
         compression. Herdr always passes `-C`; a shim first on herdr's PATH
         removes it for matching hosts only (the PATH also reaches herdr's panes).
+      '';
+    };
+
+    sshPosixHosts = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      example = ["blackwin" "mac"];
+      description = ''
+        SSH destination globs whose login shell is not POSIX (nushell).
+        Herdr sends some remote commands unwrapped; the shim runs every
+        command for these hosts under /bin/sh instead.
       '';
     };
 

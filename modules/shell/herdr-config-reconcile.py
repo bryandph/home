@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
-"""Reconcile Nix-owned top-level Herdr settings into its writable config."""
+"""Reconcile Nix-owned Herdr settings into its writable config.
+
+Ownership is tracked per dotted path. Most top-level keys are owned whole;
+keys named with --shared-table (Herdr writes `ui.sound`, `ui.toast`, and
+`ui.status_indicators` itself) are owned one level down, so Nix can declare
+`ui.sidebar` without replacing Herdr's runtime UI settings.
+"""
 
 from __future__ import annotations
 
+import argparse
 import copy
 import fcntl
 import hashlib
@@ -15,7 +22,7 @@ import tempfile
 import tomlkit
 
 
-STATE_VERSION = 1
+STATE_VERSION = 2
 
 
 def herdr_config_path() -> Path:
@@ -41,19 +48,67 @@ def read_toml(path: Path, *, missing_ok: bool):
         raise
 
 
-def read_owned_keys(path: Path) -> set[str]:
+def read_owned_paths(path: Path) -> set[str]:
     try:
         with path.open("r", encoding="utf-8") as handle:
             state = json.load(handle)
     except FileNotFoundError:
         return set()
 
-    if not isinstance(state, dict) or state.get("version") != STATE_VERSION:
+    if not isinstance(state, dict) or state.get("version") not in (1, STATE_VERSION):
         raise ValueError(f"invalid reconciliation state in {path}")
-    keys = state.get("owned_top_level")
+    # Version 1 recorded top-level keys, which are valid one-segment paths.
+    keys = state.get("owned_top_level" if state["version"] == 1 else "owned")
     if not isinstance(keys, list) or not all(isinstance(key, str) for key in keys):
-        raise ValueError(f"invalid owned_top_level list in {path}")
+        raise ValueError(f"invalid owned path list in {path}")
     return set(keys)
+
+
+def owned_paths(desired, shared_tables: set[str]) -> set[str]:
+    paths = set()
+    for key, value in desired.items():
+        if key in shared_tables:
+            if not isinstance(value, dict):
+                raise ValueError(f"shared table {key!r} must be a table in the desired config")
+            paths.update(f"{key}.{child}" for child in value)
+        else:
+            paths.add(key)
+    return paths
+
+
+def lookup(document, path: str):
+    node = document
+    for segment in path.split("."):
+        node = node[segment]
+    return node
+
+
+def remove_path(document, path: str) -> None:
+    *parents, leaf = path.split(".")
+    chain = [document]
+    for segment in parents:
+        node = chain[-1].get(segment)
+        if not isinstance(node, dict):
+            return
+        chain.append(node)
+    chain[-1].pop(leaf, None)
+    # Drop tables the removal emptied, but never the document itself.
+    for depth in range(len(parents), 0, -1):
+        if chain[depth]:
+            break
+        chain[depth - 1].pop(parents[depth - 1], None)
+
+
+def set_path(document, path: str, value) -> None:
+    *parents, leaf = path.split(".")
+    node = document
+    for segment in parents:
+        if segment not in node:
+            node[segment] = tomlkit.table()
+        node = node[segment]
+        if not isinstance(node, dict):
+            raise ValueError(f"live config key {segment!r} is not a table")
+    node[leaf] = value
 
 
 def atomic_write(path: Path, content: str) -> None:
@@ -73,9 +128,9 @@ def atomic_write(path: Path, content: str) -> None:
         temporary_path.unlink(missing_ok=True)
 
 
-def reconcile(desired_path: Path) -> None:
+def reconcile(desired_path: Path, shared_tables: set[str]) -> None:
     desired = read_toml(desired_path, missing_ok=False)
-    desired_keys = set(desired.keys())
+    desired_paths = owned_paths(desired, shared_tables)
     live_path = herdr_config_path()
     managed_state_path = state_path(live_path)
 
@@ -88,12 +143,12 @@ def reconcile(desired_path: Path) -> None:
             fcntl.flock(lock, fcntl.LOCK_EX)
 
             live = read_toml(live_path, missing_ok=True)
-            previously_owned = read_owned_keys(managed_state_path)
+            previously_owned = read_owned_paths(managed_state_path)
 
-            for key in previously_owned - desired_keys:
-                live.pop(key, None)
-            for key in desired_keys:
-                live[key] = copy.deepcopy(desired[key])
+            for path in sorted(previously_owned - desired_paths):
+                remove_path(live, path)
+            for path in sorted(desired_paths):
+                set_path(live, path, copy.deepcopy(lookup(desired, path)))
 
             rendered = tomlkit.dumps(live)
             existing = None
@@ -107,7 +162,7 @@ def reconcile(desired_path: Path) -> None:
             rendered_state = json.dumps(
                 {
                     "version": STATE_VERSION,
-                    "owned_top_level": sorted(desired_keys),
+                    "owned": sorted(desired_paths),
                 },
                 indent=2,
             ) + "\n"
@@ -129,13 +184,14 @@ def reconcile(desired_path: Path) -> None:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("usage: herdr-config-reconcile DESIRED_TOML", file=sys.stderr)
-        return 2
+    parser = argparse.ArgumentParser(prog="herdr-config-reconcile")
+    parser.add_argument("desired", type=Path)
+    parser.add_argument("--shared-table", action="append", default=[])
+    args = parser.parse_args()
 
     live_path = herdr_config_path()
     try:
-        reconcile(Path(sys.argv[1]))
+        reconcile(args.desired, set(args.shared_table))
     except Exception as error:
         print(f"herdr config reconciliation failed for {live_path}: {error}", file=sys.stderr)
         return 1

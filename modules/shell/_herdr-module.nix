@@ -5,7 +5,13 @@
 #
 # Herdr legitimately writes runtime state into config.toml. Nix therefore
 # renders only its desired projection and a launcher shim reconciles the
-# Nix-owned top-level keys into the writable live file before Herdr starts.
+# Nix-owned keys into the writable live file before Herdr starts. Herdr writes
+# its own settings under `[ui]`, so Nix owns `ui.<table>` entries rather than
+# the whole section.
+#
+# Plugins are linked from the store by activation (`herdr plugin link`
+# canonicalizes the path, so every new store path needs a relink); plugins
+# dropped from the option are unlinked.
 # Immutable agent-detection overrides remain direct Home Manager files. The
 # package stays consumer-supplied (flake input / overlay).
 #
@@ -76,7 +82,13 @@
   };
   wrapArgs =
     lib.optionals (cfg.sshNoCompressionHosts ++ cfg.sshPosixHosts != []) ["--prefix" "PATH" ":" "${sshShim}/bin"]
-    ++ ["--run" "${lib.getExe reconcileConfig} ${desiredConfig} || exit $?"];
+    ++ ["--run" "${lib.getExe reconcileConfig} ${desiredConfig} --shared-table ui || exit $?"];
+  pluginsJson = pkgs.writeText "herdr-plugins.json" (builtins.toJSON (lib.mapAttrs (_: toString) cfg.plugins));
+  syncPlugins = pkgs.writeShellApplication {
+    name = "herdr-plugins-sync";
+    runtimeInputs = [cfg.package pkgs.coreutils pkgs.jq];
+    text = builtins.readFile ./herdr-plugins-sync.sh;
+  };
   wrappedPackage = pkgs.symlinkJoin {
     name = "herdr-wrapped";
     paths = [cfg.package];
@@ -196,6 +208,17 @@ in {
       '';
     };
 
+    plugins = lib.mkOption {
+      type = lib.types.attrsOf lib.types.path;
+      default = {};
+      example = lib.literalExpression ''{ "example.layout" = pkgs.callPackage ./layout-plugin.nix {}; }'';
+      description = ''
+        Plugin id → plugin directory (containing herdr-plugin.toml) linked by
+        activation. The id must match the manifest's. Linked plugins are
+        enabled; ones removed from this option are unlinked.
+      '';
+    };
+
     extraConfig = lib.mkOption {
       inherit (tomlFormat) type;
       default = {};
@@ -216,6 +239,10 @@ in {
     ];
 
     home.packages = [wrappedPackage];
+
+    home.activation.herdrPlugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      run ${lib.getExe syncPlugins} ${pluginsJson}
+    '';
 
     xdg.configFile =
       lib.mapAttrs' (

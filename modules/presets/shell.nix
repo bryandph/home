@@ -13,6 +13,7 @@
       ghostty-terminfo
       helix
       herdr
+      herdr-sidebar-tree
       k9s
       kubernetes-oidc
       neovim

@@ -23,6 +23,9 @@
     programs.herdr = {
       enable = true;
       package = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # One worktree root for every repo in the BPH layout; herdr creates
+      # checkouts at <directory>/<repo>/<branch-slug>.
+      extraConfig.worktrees.directory = "~/BPH/.worktrees";
     };
 
     services.ssh-agent.enable = lib.mkDefault true;

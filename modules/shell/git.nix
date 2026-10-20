@@ -20,8 +20,6 @@
             name = config.meta.user.fullname;
           };
           init.defaultBranch = "main";
-          # Worktree links survive moving the checkout or its worktree root.
-          worktree.useRelativePaths = true;
           core = {
             untrackedCache = true;
             preloadIndex = true;

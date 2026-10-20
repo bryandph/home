@@ -44,7 +44,7 @@
     # follows-dedupes it when composed. Consumption of the user-plane
     # modules lands with bryan/nixspace#86.
     agentic = {
-      url = "git+ssh://git@git.bph/bryan/agentic?rev=82644af2a73194915dda4cad81ea88439d4c015e";
+      url = "git+ssh://git@git.bph/bryan/agentic?rev=dc67d222ba71a6c307d0dc922f62039944050a39";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";

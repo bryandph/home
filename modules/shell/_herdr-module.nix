@@ -80,8 +80,13 @@
     noCompressionHosts = cfg.sshNoCompressionHosts;
     posixHosts = cfg.sshPosixHosts;
   };
+  # The detached server inherits the PATH of whatever started it. Started by
+  # the SSH bridge or launchd that is the bare system PATH, and git hooks the
+  # server runs for `herdr worktree create` (git-lfs post-checkout) then fail.
+  # Put the per-user profile on PATH for every entry point.
   wrapArgs =
     lib.optionals (cfg.sshNoCompressionHosts ++ cfg.sshPosixHosts != []) ["--prefix" "PATH" ":" "${sshShim}/bin"]
+    ++ ["--suffix" "PATH" ":" "${config.home.profileDirectory}/bin"]
     ++ ["--run" "${lib.getExe reconcileConfig} ${desiredConfig} --shared-table ui || exit $?"];
   pluginsJson = pkgs.writeText "herdr-plugins.json" (builtins.toJSON (lib.mapAttrs (_: toString) cfg.plugins));
   syncPlugins = pkgs.writeShellApplication {

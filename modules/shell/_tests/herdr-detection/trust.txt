@@ -1,0 +1,9 @@
+Trust project folder?
+
+/fixture/project
+
+› Do not trust
+  Trust (this session only)
+  Trust and remember
+
+enter select • esc cancel

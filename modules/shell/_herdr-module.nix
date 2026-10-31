@@ -186,9 +186,15 @@ in {
 
     agentDetection = lib.mkOption {
       type = lib.types.attrsOf lib.types.path;
-      default = {};
+      # A local override REPLACES the complete remote manifest, including its
+      # working rules. Keep the dotted-numeric version: Herdr silently ignores
+      # invalid versions. This shadows future remote Pi updates (reported as
+      # local_override_shadowing_remote); retire it when upstream ships a
+      # blocked rule for Pi's project-trust dialog. After switching, run
+      # `herdr server reload-agent-manifests` to refresh an existing server.
+      default = {"pi.toml" = ./_herdr/pi.toml;};
       example = lib.literalExpression ''{ "claude.toml" = ./herdr/claude-detection.toml; }'';
-      description = "Agent-detection manifest overrides installed under ~/.config/herdr/agent-detection/.";
+      description = "Read-only agent-detection manifest overrides installed under ~/.config/herdr/agent-detection/.";
     };
 
     sshNoCompressionHosts = lib.mkOption {

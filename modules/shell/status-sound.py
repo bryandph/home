@@ -8,7 +8,7 @@ import sys
 
 def allowed(harness, event, payload, env):
     if (env.get("AGENTIC_SOUNDS_DISABLE") == "1"
-            or env.get("WORKMUX_DISABLE_SET_WINDOW_STATUS") == "1"
+            or env.get("AGENTIC_STATUS_DISABLE") == "1"
             or env.get("PI_SESSION_ID")):
         return False
     if harness != "pi" and env.get("AGENTIC_SOUNDS_INTERACTIVE") != "1":

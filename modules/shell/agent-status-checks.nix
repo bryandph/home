@@ -8,7 +8,6 @@
       inputs.home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         modules = [
-          ./_workmux-module.nix
           ./_herdr-module.nix
           ./_agent-status-module.nix
           ./_status-sounds-module.nix
@@ -20,7 +19,6 @@
             };
             programs = {
               claude-code.enable = true;
-              workmux.package = pkgs.emptyDirectory // {src = ./_tests/workmux;};
               herdr = {
                 enable = true;
                 package = pkgs.emptyDirectory // {src = inputs.herdr.outPath;};
@@ -81,13 +79,14 @@
     assert !(builtins.tryEval invalid.activationPackage.drvPath).success;
     assert lib.all (path: !(builtins.hasAttr path files)) mutableFiles;
     assert toString files.".pi/agent/extensions/herdr-agent-state.ts".source == "${inputs.herdr.outPath}/src/integration/assets/pi/herdr-agent-state.ts";
-    assert toString files.".pi/agent/extensions/workmux-status.ts".source == "${both.agentic.statusHooks.workmuxSrc}/resources/pi/extensions/workmux-status.ts";
-    assert !(soundsOnly.home.file ? ".pi/agent/extensions/workmux-status.ts");
+    assert !(soundsOnly.home.file ? ".pi/agent/extensions/herdr-agent-state.ts");
     assert !(statusOnly.home.file ? ".pi/agent/extensions/status-sounds.ts");
       pkgs.runCommand "agent-status-sounds-check" {nativeBuildInputs = [pkgs.python3 pkgs.nodejs];} ''
         python3 ${./_tests/sound-hooks.py} ${bundle}
         node --experimental-strip-types ${./_tests/pi-sounds.mjs} ${files.".pi/agent/extensions/status-sounds.ts".source}
         node --experimental-strip-types ${./_tests/pi-prompts.mjs} ${files.".pi/agent/extensions/status-prompts.ts".source}
+        node --experimental-strip-types ${./_tests/pi-herdr.mjs} ${files.".pi/agent/extensions/herdr-agent-state.ts".source} ${files.".pi/agent/extensions/status-prompts.ts".source}
+        python3 ${./_tests/status-report.py} ${./status-report.py}
         touch "$out"
       '';
   };

@@ -21,7 +21,7 @@
           plugin = resurrect;
           extraConfig = ''
             set -g @resurrect-capture-pane-contents 'on'
-            set -g @resurrect-processes 'hx lazygit btop k9s workmux'
+            set -g @resurrect-processes 'hx lazygit btop k9s'
           '';
         }
         {

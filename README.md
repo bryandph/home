@@ -25,7 +25,7 @@ home/
     │   └── treefmt.nix        #   nix fmt -> treefmt -> alejandra
     ├── shell/                 # Feature modules: git, gpg, helix, k9s,
     │                          #   nix-tools, nushell, sesh, starship, tmux,
-    │                          #   workmux, ghostty, packages
+    │                          #   herdr, ghostty, packages
     ├── de/                    # Feature modules: hyprland, i3, shared keymap, rofi, bars
     ├── presets/               # Bundles: shell, de-hyprland, de-i3, desktop-i3
     ├── profiles/              # Coarse exports: bryan, bryan-with-de, bryan-with-i3, bryan-darwin

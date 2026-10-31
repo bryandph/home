@@ -24,7 +24,6 @@
       shell-packages
       starship
       tmux
-      workmux
     ];
   };
 }

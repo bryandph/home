@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 const { default: extension } = await import(pathToFileURL(process.argv[2]));
-for (const key of ['AGENTIC_SOUNDS_DISABLE', 'WORKMUX_DISABLE_SET_WINDOW_STATUS', 'PI_SESSION_ID', 'CLAUDECODE', 'CODEX_THREAD_ID']) delete process.env[key];
+for (const key of ['AGENTIC_SOUNDS_DISABLE', 'AGENTIC_STATUS_DISABLE', 'PI_SESSION_ID', 'CLAUDECODE', 'CODEX_THREAD_ID']) delete process.env[key];
 function fixture(mode = 'tui') {
   const handlers = new Map(), played = [];
   const ctx = {mode, hasUI: ['tui','rpc'].includes(mode), isIdle: () => true, hasPendingMessages: () => false};
@@ -46,7 +46,7 @@ for (const mode of ['print','json','rpc']) {
   f = fixture(mode); f.emit('session_start', {reason:'startup'}); f.emit('agent_start'); f.emit('ui_prompt_start'); finish(f);
   assert.deepEqual(f.played,[]);
 }
-for (const key of ['AGENTIC_SOUNDS_DISABLE','WORKMUX_DISABLE_SET_WINDOW_STATUS','PI_SESSION_ID','CLAUDECODE','CODEX_THREAD_ID']) {
+for (const key of ['AGENTIC_SOUNDS_DISABLE','AGENTIC_STATUS_DISABLE','PI_SESSION_ID','CLAUDECODE','CODEX_THREAD_ID']) {
   process.env[key] = '1'; f = fixture(); f.emit('session_start', {reason:'startup'}); f.emit('agent_start'); f.emit('ui_prompt_start'); finish(f);
   assert.deepEqual(f.played,[]); delete process.env[key];
 }

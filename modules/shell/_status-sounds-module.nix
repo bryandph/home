@@ -4,7 +4,7 @@
 # A separate, composable concern: off by default, hosts opt in individually
 # (interactive workstations want it; shared/headless hosts stay silent).
 # Delivery for Claude Code is a tiny locally-generated plugin — a second
-# plugin next to the upstream workmux-status one, so the upstream artifact
+# plugin next to the pinned Herdr status one, so the upstream artifact
 # stays pure and ~/.claude/settings.json stays unmanaged (the writability
 # invariant from _agent-status-module.nix). Codex exposes hook data for the
 # parent launcher; Pi uses a separate extension. No harness settings are owned.
@@ -18,7 +18,7 @@
   jsonFormat = pkgs.formats.json {};
 
   # Abstract sound events → Claude Code hook wiring. `waiting` uses the same
-  # matcher as workmux's status plugin so both fire on the same prompts.
+  # matcher as Claude's native approval notifications.
   claudeHookFor = {
     session-start = {
       event = "SessionStart";

@@ -1,23 +1,5 @@
-# `agentic.statusHooks` — cross-harness agent status reporting into workmux
-# (bryan/nixspace#86, capability agent-status-hooks).
-#
-# One canonical status model (working | waiting | done | clear, reported via
-# `workmux set-window-status`), delivered per harness from the pinned workmux
-# source's own integration resources — the same artifacts `workmux setup`
-# would install, minus the imperative installer. We carry no forked hook or
-# plugin logic. Local side channels add Codex's PermissionRequest → waiting
-# mapping and bridge Pi UI prompts to workmux/Herdr waiting events.
-# Nested agents suppress reporting via WORKMUX_DISABLE_SET_WINDOW_STATUS=1 (upstream workmux behavior).
-#
-# Mutable harness configuration is reconciled by the harness launcher. Claude
-# Code delivery deliberately rides the plugin
-# mechanism (`--plugin-dir` wrapper args) and NEVER
-# `programs.claude-code.settings`/`marketplaces` — home-manager renders those
-# into a read-only store-symlinked ~/.claude/settings.json, breaking Claude
-# Code's own write-back (asserted below). The Codex hook projection is exposed
-# as data for the parent launcher reconciler; this module does not own the
-# mutable ~/.codex/hooks.json file. Never run `workmux setup` on hosts under
-# this module.
+# Declarative delivery of Herdr's pinned integrations. Harness settings remain
+# mutable and launcher-owned; no imperative integration installer runs.
 {
   lib,
   config,
@@ -26,125 +8,68 @@
 }: let
   cfg = config.agentic.statusHooks;
   jsonFormat = pkgs.formats.json {};
-
-  # Canonical status model (data, not hook bodies) — positioned to lift into
-  # the agentic core's schema once it exists (#85 follow-up). The
-  # Claude/OpenCode/Pi event→state mappings live inside the upstream
-  # artifacts delivered verbatim below; the Codex delta is the one mapping we
-  # author, expressed as data and merged over upstream's baseline.
-  statusModel = {
-    states = ["working" "waiting" "done" "clear"];
-    setStatus = state: "workmux set-window-status ${state}";
-    codexDelta = {
-      PermissionRequest = "waiting";
-    };
-  };
-
-  # Per-harness resource paths inside the pinned workmux source (layout as of
-  # v0.1.248 — only the Claude plugin stays at the repo root; every other
-  # harness lives under resources/<harness>/). The existence assertions below
-  # catch upstream path moves on pin bumps.
+  resource = name: "${cfg.herdrSrc}/src/integration/assets/${name}";
   resources = {
-    # Claude plugin root is the workmux source itself: marketplace.json lists
-    # plugin source "./", hooks are bundled in .claude-plugin/plugin.json.
-    claude = "${cfg.workmuxSrc}/.claude-plugin/plugin.json";
-    opencode = "${cfg.workmuxSrc}/resources/opencode/plugins/workmux-status.ts";
-    pi = "${cfg.workmuxSrc}/resources/pi/extensions/workmux-status.ts";
-    codex = "${cfg.workmuxSrc}/resources/codex/hooks/workmux-status.json";
+    claude = resource "claude/herdr-agent-state.sh";
+    codex = resource "codex/herdr-agent-state.sh";
+    opencode = resource "opencode/herdr-agent-state.js";
+    pi = resource "pi/herdr-agent-state.ts";
   };
-
-  # Codex hooks: upstream baseline read from the pinned source (changes flow
-  # in on pin bumps) + our waiting delta from the status model + Herdr's
-  # official pinned SessionStart lifecycle hook.
-  codexBaseline = builtins.fromJSON (builtins.readFile resources.codex);
-  workmuxCodexHooks =
-    codexBaseline.hooks
-    // lib.mapAttrs (_event: state: [
-      {
-        hooks = [
-          {
-            type = "command";
-            command = statusModel.setStatus state;
-          }
-        ];
-      }
-    ])
-    statusModel.codexDelta;
-
-  herdrCodexScriptSource =
-    if config.programs.herdr.package ? src
-    then "${config.programs.herdr.package.src}/src/integration/assets/codex/herdr-agent-state.sh"
-    else null;
-  herdrCodexScript = pkgs.runCommand "herdr-agent-state.sh" {} ''
-    cp ${herdrCodexScriptSource} "$out"
-    chmod 0555 "$out"
-  '';
-  herdrCodexScriptTarget = "${config.home.homeDirectory}/.codex/herdr-agent-state.sh";
-  herdrPiSource =
-    if config.programs.herdr.package ? src
-    then "${config.programs.herdr.package.src}/src/integration/assets/pi/herdr-agent-state.ts"
-    else null;
-  piPromptBridge = pkgs.writeText "pi-status-prompts.ts" (lib.replaceStrings
-    ["@herdr@"] [(builtins.toJSON config.programs.herdr.enable)]
-    (builtins.readFile ./pi-status-prompts.ts));
-  herdrCodexHook = {
+  script = harness:
+    pkgs.writeShellScript "herdr-${harness}-status" ''
+      export PATH=${lib.makeBinPath [pkgs.python3 pkgs.coreutils]}:$PATH
+      exec ${pkgs.runtimeShell} ${resources.${harness}} "$@"
+    '';
+  hook = command: {
     hooks = [
       {
         type = "command";
-        command = "bash ${lib.escapeShellArg herdrCodexScriptTarget} session";
+        inherit command;
         timeout = 10;
       }
     ];
   };
-  codexHooks =
-    workmuxCodexHooks
-    // lib.optionalAttrs config.programs.herdr.enable {
-      SessionStart = (workmuxCodexHooks.SessionStart or []) ++ [herdrCodexHook];
-    };
-
-  harnessOption = name: default: extraDoc:
+  # Native Codex resources report lifecycle/working/idle. PermissionRequest is
+  # an extra blocked event, delivered beside (not patched into) upstream code.
+  waiting = pkgs.writeShellScript "herdr-codex-waiting" ''
+    exec ${pkgs.python3}/bin/python3 ${./status-report.py}
+  '';
+  codexHooks = {
+    SessionStart = [(hook "${script "codex"} session")];
+    UserPromptSubmit = [(hook "${script "codex"} working")];
+    Stop = [(hook "${script "codex"} idle")];
+    Interrupt = [(hook "${script "codex"} idle")];
+    PermissionRequest = [(hook "${waiting}")];
+  };
+  claudePlugin = pkgs.runCommand "claude-herdr-status-plugin" {} ''
+    install -Dm644 ${jsonFormat.generate "herdr-status-plugin.json" {
+      name = "herdr-status";
+      version = "1.0.0";
+      hooks.SessionStart = [(hook "${script "claude"} session")];
+    }} $out/.claude-plugin/plugin.json
+  '';
+  piPromptBridge = pkgs.writeText "pi-status-prompts.ts" (builtins.readFile ./pi-status-prompts.ts);
+  harnessOption = name: default:
     lib.mkOption {
       type = lib.types.bool;
       inherit default;
-      description = "Deliver the workmux status integration for ${name}. ${extraDoc}";
+      description = "Deliver the pinned Herdr integration for ${name}.";
     };
-
-  resourceAssertion = harness: {
-    assertion = cfg.harnesses.${harness} -> builtins.pathExists resources.${harness};
-    message = ''
-      agentic.statusHooks: workmux resource for ${harness} not found at
-      ${resources.${harness}} — the pinned workmux source has likely moved its
-      integration resources (this happened before, v0.1.182). Update the
-      resource paths in _agent-status-module.nix for the new layout.
-    '';
-  };
 in {
   options.agentic.statusHooks = {
-    enable = lib.mkEnableOption "cross-harness agent status reporting to workmux";
-
-    workmuxSrc = lib.mkOption {
+    enable = lib.mkEnableOption "cross-harness agent status reporting to Herdr";
+    herdrSrc = lib.mkOption {
       type = lib.types.path;
-      default = config.programs.workmux.package.src;
-      defaultText = lib.literalExpression "config.programs.workmux.package.src";
-      description = ''
-        Pinned workmux source tree providing the per-harness integration
-        resources. Defaults to the source of the configured workmux binary so
-        resources and CLI stay in lockstep across pin bumps.
-      '';
+      default = config.programs.herdr.package.src;
+      defaultText = lib.literalExpression "config.programs.herdr.package.src";
+      description = "Pinned Herdr source providing native integration resources.";
     };
-
     harnesses = {
-      claude = harnessOption "Claude Code" true "Delivered as a plugin (`--plugin-dir`); settings.json is never managed.";
-      opencode = harnessOption "OpenCode" true "Upstream plugin file placed in the (singular) plugin/ config dir.";
-      codex = harnessOption "Codex" false ''
-        Off by default: codex is not currently installed. Enabling exposes the
-        upstream baseline + PermissionRequest→waiting + Herdr lifecycle hook
-        through agentic.statusHooks.codexHooks. The parent Codex launcher
-        reconciles that projection into writable hooks.json/config.toml files.
-      '';
-      pi = harnessOption "Pi" false "Places pinned workmux and (when enabled) Herdr extensions beside each other in ~/.pi/agent/extensions/. Settings remain tool-owned.";
+      claude = harnessOption "Claude Code" true;
+      opencode = harnessOption "OpenCode" true;
+      codex = harnessOption "Codex" false;
+      pi = harnessOption "Pi" false;
     };
-
     codexHooks = lib.mkOption {
       inherit (jsonFormat) type;
       default =
@@ -153,79 +78,31 @@ in {
         else {};
       readOnly = true;
       internal = true;
-      description = "Composed Codex event-to-hook-groups projection for the mutable-file reconciler.";
+      description = "Codex hooks for the mutable-file launcher reconciler.";
     };
   };
-
   config = lib.mkIf cfg.enable {
     assertions =
-      map resourceAssertion (lib.attrNames resources)
+      (map (harness: {
+        assertion = cfg.harnesses.${harness} -> builtins.pathExists resources.${harness};
+        message = "agentic.statusHooks: missing pinned Herdr resource ${resources.${harness}}";
+      }) (lib.attrNames resources))
       ++ [
         {
-          assertion = !cfg.harnesses.pi || !config.programs.herdr.enable || (herdrPiSource != null && builtins.pathExists herdrPiSource);
-          message = "agentic.statusHooks: Herdr package.src must expose src/integration/assets/pi/herdr-agent-state.ts.";
+          assertion = config.programs.herdr.enable;
+          message = "agentic.statusHooks requires programs.herdr.enable.";
         }
         {
-          assertion = cfg.harnesses.claude -> config.programs.claude-code.enable;
-          message = "agentic.statusHooks.harnesses.claude requires programs.claude-code.enable (the plugin rides its wrapper).";
-        }
-        {
-          assertion =
-            cfg.harnesses.claude
-            -> (config.programs.claude-code.settings == {} && config.programs.claude-code.marketplaces == {});
-          message = ''
-            agentic.statusHooks: programs.claude-code.settings/marketplaces
-            must stay empty — home-manager renders either into a read-only
-            store-symlinked ~/.claude/settings.json, breaking Claude Code's
-            own write-back (the writability invariant of the
-            agent-status-hooks capability).
-          '';
-        }
-        {
-          assertion =
-            !cfg.harnesses.codex
-            || !config.programs.herdr.enable
-            || (
-              herdrCodexScriptSource
-              != null
-              && builtins.pathExists herdrCodexScriptSource
-            );
-          message = ''
-            agentic.statusHooks: the configured Herdr package does not expose
-            its pinned Codex integration script at
-            package.src/src/integration/assets/codex/herdr-agent-state.sh.
-          '';
+          assertion = cfg.harnesses.claude -> (config.programs.claude-code.enable && config.programs.claude-code.settings == {} && config.programs.claude-code.marketplaces == {});
+          message = "agentic.statusHooks: Claude must be enabled with empty settings/marketplaces so settings remain writable.";
         }
       ];
-
-    # The plugin root is the pinned workmux source tree itself, handed over
-    # as an interpolated store-path STRING — deliberately, not the bare path
-    # value. `programs.claude-code.plugins` is a `listOf package`, and
-    # types.package coerces a path (or a context-free string) with
-    # lib.toDerivation → `builtins.storePath`, which is illegal under pure
-    # evaluation: it sinks every pure whole-fleet build (`nix run
-    # .#push-cache` enumerates host toplevels without --impure). Interpolating
-    # produces an equivalent store path carrying string context, so no
-    # coercion happens and the plugin dir stays fleet-buildable purely.
-    programs.claude-code.plugins = lib.mkIf cfg.harnesses.claude ["${cfg.workmuxSrc}"];
-
-    xdg.configFile."opencode/plugin/workmux-status.ts" = lib.mkIf cfg.harnesses.opencode {
-      source = resources.opencode;
-    };
-
+    programs.claude-code.plugins = lib.mkIf cfg.harnesses.claude [claudePlugin];
+    xdg.configFile."opencode/plugin/herdr-agent-state.js" = lib.mkIf cfg.harnesses.opencode {source = resources.opencode;};
     home.file = {
-      ".pi/agent/extensions/workmux-status.ts" = lib.mkIf cfg.harnesses.pi {
-        source = resources.pi;
-      };
-      ".pi/agent/extensions/status-prompts.ts" = lib.mkIf cfg.harnesses.pi {
-        source = piPromptBridge;
-      };
-      ".pi/agent/extensions/herdr-agent-state.ts" = lib.mkIf (cfg.harnesses.pi && config.programs.herdr.enable) {
-        source = herdrPiSource;
-      };
-      ".codex/herdr-agent-state.sh" = lib.mkIf (cfg.harnesses.codex && config.programs.herdr.enable) {
-        source = herdrCodexScript;
-      };
+      ".pi/agent/extensions/status-prompts.ts" = lib.mkIf cfg.harnesses.pi {source = piPromptBridge;};
+      ".pi/agent/extensions/herdr-agent-state.ts" = lib.mkIf cfg.harnesses.pi {source = resources.pi;};
+      ".codex/herdr-agent-state.sh" = lib.mkIf cfg.harnesses.codex {source = script "codex";};
     };
   };
 }

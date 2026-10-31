@@ -10,16 +10,11 @@
 }: {
   configurations.home.bryan-darwin = {
     system = "aarch64-darwin";
-    module = {pkgs, ...}: {
+    module = {
       imports = [
         config.flake.modules.homeManager.bryan-darwin
         inputs.stylix.homeModules.stylix
       ];
-
-      programs.workmux = {
-        enable = true;
-        package = inputs.workmux.packages.${pkgs.stdenv.hostPlatform.system}.default;
-      };
     };
   };
 }

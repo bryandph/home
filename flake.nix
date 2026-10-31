@@ -52,9 +52,6 @@
         treefmt-nix.follows = "treefmt-nix";
       };
     };
-    workmux = {
-      url = "github:raine/workmux";
-    };
     herdr = {
       url = "github:ogulcancelik/herdr";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -12,7 +12,7 @@ codex = bundle['codex']
 assert set(claude) == {'SessionStart', 'UserPromptSubmit', 'Notification', 'Stop'}
 assert set(codex) == {'SessionStart', 'UserPromptSubmit', 'PermissionRequest', 'Stop'}
 assert claude['Notification'][0]['matcher'] == 'permission_prompt|elicitation_dialog'
-assert len(bundle['composed']['SessionStart']) == 3  # workmux + Herdr + sounds
+assert len(bundle['composed']['SessionStart']) == 2  # Herdr + sounds
 assert len(bundle['composed']['Stop']) == 2
 assert len(bundle['composed']['PermissionRequest']) == 2
 assert bundle['statusOnly'] == bundle['status']
@@ -40,7 +40,7 @@ with tempfile.TemporaryDirectory() as temp:
         assert all(json.loads(line) == [bundle['sound']] for line in lines)
     for hooks in [claude, codex]:
         for event in hooks: run(hooks, event)
-        for variable in ['AGENTIC_SOUNDS_DISABLE','WORKMUX_DISABLE_SET_WINDOW_STATUS','PI_SESSION_ID']:
+        for variable in ['AGENTIC_SOUNDS_DISABLE','AGENTIC_STATUS_DISABLE','PI_SESSION_ID']:
             run(hooks, 'Stop', overrides={variable:'1'}, audible=False)
         run(hooks, 'Stop', overrides={'AGENTIC_SOUNDS_INTERACTIVE':'0'}, audible=False)
         for payload in [{'agent_id':'child'}, {'agent_type':'worker'}, {'aborted':True}, {'stop_reason':'error'}, {'stop_hook_active':True}]:

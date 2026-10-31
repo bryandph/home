@@ -1,27 +1,26 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-// Bridge Pi's native UI prompt span to the pinned upstream integrations.
-// Neither upstream extension is modified. This includes adapter approval UI.
-const herdr = @herdr@;
+// Bridge native UI prompt spans (including adapter approvals) to Herdr's
+// pinned integration. Its blocked counter restores working/idle on close.
 export default function (pi: ExtensionAPI) {
   let waiting = false;
   function enabled(ctx: ExtensionContext) {
     return ctx.mode === "tui" && ctx.hasUI &&
-      process.env.WORKMUX_DISABLE_SET_WINDOW_STATUS !== "1" &&
+      process.env.AGENTIC_STATUS_DISABLE !== "1" &&
       !process.env.PI_SESSION_ID && !process.env.CLAUDECODE && !process.env.CODEX_THREAD_ID;
   }
   pi.on("ui_prompt_start", (_event, ctx) => {
     if (!enabled(ctx) || waiting) return;
     waiting = true;
-    if (herdr) pi.events.emit("herdr:blocked", {active: true, label: "Waiting for input"});
-    void pi.exec("workmux", ["set-window-status", "waiting"]).catch(() => {});
+    ctx.ui.setStatus("agent-prompt", "Waiting for input");
+    pi.events.emit("herdr:blocked", {active: true, label: "Waiting for input"});
   });
   function end(ctx: ExtensionContext) {
     if (!waiting) return;
     waiting = false;
-    if (herdr) pi.events.emit("herdr:blocked", {active: false});
-    // Idle is not proof of success (the prompt may have been cancelled).
-    void pi.exec("workmux", ["set-window-status", ctx.isIdle() ? "clear" : "working"]).catch(() => {});
+    ctx.ui.setStatus("agent-prompt", undefined);
+    // Herdr restores working/idle; closing a prompt is not proof of success.
+    pi.events.emit("herdr:blocked", {active: false});
   }
   pi.on("ui_prompt_end", (_event, ctx) => end(ctx));
   pi.on("session_shutdown", (_event, ctx) => end(ctx));

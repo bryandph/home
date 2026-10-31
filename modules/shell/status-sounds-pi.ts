@@ -12,7 +12,7 @@ export default function (pi: ExtensionAPI) {
   function play(event: string, ctx: ExtensionContext) {
     if (ctx.mode !== "tui" || !ctx.hasUI ||
         process.env.AGENTIC_SOUNDS_DISABLE === "1" ||
-        process.env.WORKMUX_DISABLE_SET_WINDOW_STATUS === "1" ||
+        process.env.AGENTIC_STATUS_DISABLE === "1" ||
         process.env.PI_SESSION_ID || process.env.CLAUDECODE || process.env.CODEX_THREAD_ID) return;
     void pi.exec(runner, ["pi", event]).catch(() => {});
   }

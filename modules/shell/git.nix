@@ -23,7 +23,9 @@
           core = {
             untrackedCache = true;
             preloadIndex = true;
-            fsmonitor = true;
+            # Off globally: per-checkout fsmonitor daemons multiplied across
+            # agent worktrees and stalled git status for hours (BPH-87).
+            fsmonitor = false;
           };
           feature.manyFiles = true;
           pack = {
